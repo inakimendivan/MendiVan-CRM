@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MendiVan CRM</title>
+<style>
+  :root {
+    --primary: #195d6a;
+    --accent: #539c88;
+    --bg: #f0f4ed;
+    --highlight: #feab70;
+    --alert: #9f4128;
+    --white: #ffffff;
+    --gray-100: #f7f9f7;
+    --gray-200: #e8ede8;
+    --gray-300: #d0d8d0;
+    --gray-400: #9aaa9a;
+    --gray-500: #6a7a6a;
+    --gray-700: #3a4a3a;
+    --text: #1a2a1a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* NAV */
+  #nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--primary);
+    display: flex; align-items: center;
+    height: 52px; padding: 0 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .nav-brand {
+    font-weight: 700; font-size: 16px; color: white;
+    margin-right: 24px; letter-spacing: -0.3px;
+  }
+
+  .nav-tabs { display: flex; gap: 4px; flex: 1; }
+
+  .nav-tab {
+    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    color: rgba(255,255,255,0.7); font-size: 13px; font-weight: 500;
+    transition: all 0.15s; user-select: none;
+    border: none; background: transparent;
+  }
+  .nav-tab:hover { background: rgba(255,255,255,0.1); color: white; }
+  .nav-tab.active { background: rgba(255,255,255,0.2); color: white; }
+  .nav-tab.disabled { cursor: default; opacity: 0.45; pointer-events: none; }
+
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+
+  #save-indicator {
+    font-size: 12px; color: rgba(255,255,255,0.7);
+    min-width: 90px; text-align: right;
+  }
+  #save-indicator.saving { color: var(--highlight); }
+  #save-indicator.saved { color: #8bc89a; }
+  #save-indicator.error { color: #f08080; }
+
+  .btn-icon {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: background 0.15s;
+  }
+  .btn-icon:hover { background: rgba(255,255,255,0.25); }
+
+  /* MAIN */
+  #main { margin-top: 52px; padding: 20px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 6px; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s; text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #1a6878; }
+  .btn-accent { background: var(--accent); color: white; }
+  .btn-accent:hover { background: #478a76; }
+  .btn-ghost { background: transparent; color: var(--gray-500); border: 1px solid var(--gray-300); }
+  .btn-ghost:hover { background: var(--gray-200); color: var(--gray-700); }
+  .btn-danger { background: var(--alert); color: white; }
+  .btn-danger:hover { background: #8a3520; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* CARDS */
+  .card {
+    background: white; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow); padding: 16px;
+    border: 1px solid var(--gray-200);
+  }
+
+  /* BADGES */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-green { background: #d1f0e0; color: #1a6a3a; }
+  .badge-orange { background: #fde8d0; color: #a04010; }
+  .badge-blue { background: #d0e8f5; color: #1050a0; }
+  .badge-gray { background: var(--gray-200); color: var(--gray-500); }
+  .badge-red { background: #fde0d8; color: var(--alert); }
+  .badge-purple { background: #ead5f0; color: #6030a0; }
+
+  /* PIPELINE BADGES */
+  .pipeline-nuevo { background: #d0e8f5; color: #1050a0; }
+  .pipeline-contactado { background: #d5ecd8; color: #2a7030; }
+  .pipeline-buscando { background: #e8d8f0; color: #602090; }
+  .pipeline-negociando { background: #fde8d0; color: #a04010; }
+  .pipeline-contratado { background: #fef4d0; color: #8a5010; }
+  .pipeline-entregado { background: #d1f0e0; color: #1a6a3a; }
+  .pipeline-perdido { background: #fde0d8; color: var(--alert); }
+
+  /* FORMS */
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--gray-500); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .form-control {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--gray-300);
+    border-radius: 6px; font-size: 13px; background: white; color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .form-control:focus { outline: none; border-color: var(--accent); }
+  .form-control:disabled { background: var(--gray-100); color: var(--gray-500); cursor: default; }
+  select.form-control { cursor: pointer; }
+  textarea.form-control { resize: vertical; min-height: 80px; }
+
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+
+  /* SECTION HEADERS */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title { font-size: 18px; font-weight: 700; color: var(--primary); }
+
+  /* CLIENTE LIST */
+  #search-bar {
+    display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+  }
+  #search-input {
+    flex: 1; padding: 8px 12px; border: 1px solid var(--gray-300);
+    border-radius: 6px; font-size: 13px; background: white;
+  }
+  #search-input:focus { outline: none; border-color: var(--accent); }
+
+  .clientes-grid {
+    display: grid; gap: 12px;
+  }
+
+  .cliente-card {
+    background: white; border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200); padding: 14px 16px;
+    box-shadow: var(--shadow); cursor: pointer;
+    transition: all 0.15s; display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px; align-items: start;
+  }
+  .cliente-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+  .cliente-card.stale { border-left: 3px solid var(--highlight); }
+
+  .cliente-name { font-weight: 700; font-size: 15px; color: var(--primary); }
+  .cliente-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .cliente-meta span { margin-right: 12px; }
+  .cliente-actions { display: flex; align-items: center; gap: 8px; }
+  .stale-badge { font-size: 11px; color: var(--highlight); font-weight: 600; }
+
+  /* FICHA CLIENTE */
+  #ficha-cliente-view .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--gray-500); cursor: pointer; font-size: 13px;
+    margin-bottom: 16px; width: fit-content;
+  }
+  #ficha-cliente-view .back-btn:hover { color: var(--primary); }
+
+  .ficha-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  }
+  .ficha-title { font-size: 22px; font-weight: 800; color: var(--primary); }
+
+  .tabs-inner { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); }
+  .tab-inner {
+    padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--gray-500); border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab-inner:hover { color: var(--primary); }
+  .tab-inner.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+  .vehiculos-list { display: grid; gap: 10px; }
+  .vehiculo-row {
+    background: white; border: 1px solid var(--gray-200); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; align-items: center;
+    justify-content: space-between; cursor: pointer; transition: all 0.15s;
+  }
+  .vehiculo-row:hover { border-color: var(--accent); }
+  .vehiculo-row.descartado { opacity: 0.55; }
+  .vehiculo-row.seleccionado { border-left: 3px solid var(--accent); }
+  .vehiculo-info { flex: 1; }
+  .vehiculo-name { font-weight: 600; font-size: 14px; }
+  .vehiculo-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+  .notas-list { display: flex; flex-direction: column; gap: 10px; }
+  .nota-item {
+    background: var(--gray-100); border-radius: var(--radius);
+    padding: 10px 12px; font-size: 13px; border-left: 3px solid var(--accent);
+  }
+  .nota-date { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+  .nota-add { display: flex; gap: 8px; margin-bottom: 16px; }
+  .nota-add textarea { flex: 1; }
+
+  /* FICHA VEHICULO */
+  #ficha-vehiculo-view .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--gray-500); cursor: pointer; font-size: 13px;
+    margin-bottom: 16px; width: fit-content;
+  }
+  #ficha-vehiculo-view .back-btn:hover { color: var(--primary); }
+
+  .vehiculo-grid {
+    display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start;
+  }
+  @media (max-width: 900px) {
+    .vehiculo-grid { grid-template-columns: 1fr; }
+  }
+
+  .fase-block {
+    border: 1px solid var(--gray-200); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 12px;
+  }
+  .fase-header {
+    padding: 10px 14px; background: var(--gray-100);
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .fase-header:hover { background: var(--gray-200); }
+  .fase-title { font-weight: 700; font-size: 13px; color: var(--primary); }
+  .fase-progress { font-size: 12px; color: var(--gray-500); }
+  .fase-body { padding: 12px 14px; display: none; }
+  .fase-body.open { display: block; }
+
+  .tarea-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid var(--gray-100);
+  }
+  .tarea-item:last-child { border-bottom: none; }
+  .tarea-check {
+    width: 16px; height: 16px; border-radius: 3px;
+    border: 2px solid var(--gray-300); cursor: pointer;
+    flex-shrink: 0; margin-top: 1px;
+    appearance: none; -webkit-appearance: none;
+    background: white; transition: all 0.15s;
+  }
+  .tarea-check:checked {
+    background: var(--accent); border-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3 4.3l-6.3 6.3-2.3-2.3-1.4 1.4 3.7 3.7 7.7-7.7z'/%3E%3C/svg%3E");
+  }
+  .tarea-label { font-size: 13px; line-height: 1.4; cursor: pointer; }
+  .tarea-label.done { text-decoration: line-through; color: var(--gray-400); }
+
+  /* ALERTAS */
+  .alertas-panel { margin-bottom: 16px; }
+  .alerta-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: #fef3ed; border: 1px solid #fcd8b8;
+    border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+    font-size: 13px; color: #7a3010;
+  }
+  .alerta-item.danger { background: #fde8e4; border-color: #f4b8b0; color: var(--alert); }
+  .alerta-icon { font-size: 15px; flex-shrink: 0; }
+
+  /* CHAT IA */
+  .chat-panel {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); display: flex; flex-direction: column;
+    height: 600px;
+  }
+  .chat-header {
+    padding: 12px 16px; border-bottom: 1px solid var(--gray-200);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chat-header-title { font-weight: 700; color: var(--primary); font-size: 14px; }
+  .chat-ai-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  }
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 12px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .msg {
+    max-width: 88%; padding: 8px 12px;
+    border-radius: 10px; font-size: 13px; line-height: 1.5;
+  }
+  .msg-user {
+    background: var(--primary); color: white;
+    align-self: flex-end; border-bottom-right-radius: 3px;
+  }
+  .msg-ai {
+    background: var(--gray-100); color: var(--text);
+    align-self: flex-start; border-bottom-left-radius: 3px;
+  }
+  .msg-ai pre { white-space: pre-wrap; font-family: inherit; }
+  .msg-system {
+    background: #fef3ed; color: #7a3010;
+    align-self: center; font-size: 12px; text-align: center;
+    border: 1px solid #fcd8b8;
+  }
+  .chat-thinking { opacity: 0.6; font-style: italic; }
+
+  .chat-toolbar {
+    padding: 8px 12px; border-top: 1px solid var(--gray-100);
+  }
+  .btn-analizar {
+    width: 100%; background: #fef3ed; border: 1px solid #fcd8b8;
+    color: #7a3010; padding: 7px; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 500; transition: all 0.15s;
+  }
+  .btn-analizar:hover { background: #fde8d0; }
+
+  .chat-input-row {
+    display: flex; gap: 8px; padding: 10px 12px;
+    border-top: 1px solid var(--gray-200);
+  }
+  .chat-input {
+    flex: 1; padding: 8px 10px; border: 1px solid var(--gray-300);
+    border-radius: 6px; font-size: 13px; resize: none; height: 60px;
+  }
+  .chat-input:focus { outline: none; border-color: var(--accent); }
+  .btn-send {
+    background: var(--primary); color: white; border: none;
+    border-radius: 6px; padding: 0 14px; cursor: pointer;
+    font-size: 18px; transition: background 0.15s;
+    align-self: flex-end; height: 36px;
+  }
+  .btn-send:hover { background: #1a6878; }
+  .btn-send:disabled { opacity: 0.5; cursor: default; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal {
+    background: white; border-radius: var(--radius-lg);
+    padding: 24px; max-width: 560px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* TOAST */
+  #toast-container {
+    position: fixed; bottom: 20px; right: 20px; z-index: 300;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: var(--gray-700); color: white; padding: 10px 16px;
+    border-radius: 8px; font-size: 13px; box-shadow: var(--shadow-md);
+    animation: slideIn 0.2s ease;
+  }
+  .toast.success { background: var(--accent); }
+  .toast.error { background: var(--alert); }
+  .toast.warning { background: #c07030; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* CONFIG */
+  .config-section { margin-bottom: 24px; }
+  .config-section h3 { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 12px; border-bottom: 1px solid var(--gray-200); padding-bottom: 6px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--gray-400);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* FASE SELECTOR */
+  .fase-selector {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+  }
+  .fase-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 2px solid var(--gray-300); background: white; cursor: pointer;
+    color: var(--gray-500); transition: all 0.15s;
+  }
+  .fase-btn.active {
+    border-color: var(--primary); background: var(--primary); color: white;
+  }
+  .fase-btn.completed { border-color: var(--accent); color: var(--accent); }
+
+  /* LINK */
+  a.link-ext {
+    color: var(--accent); text-decoration: none; font-size: 12px;
+  }
+  a.link-ext:hover { text-decoration: underline; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--gray-100); }
+  ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+  /* SETUP SCREEN */
+  #setup-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .setup-card {
+    background: white; border-radius: var(--radius-lg); padding: 36px 40px;
+    max-width: 480px; width: 100%; box-shadow: var(--shadow-md);
+    border: 1px solid var(--gray-200);
+  }
+  .setup-logo { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+  .setup-sub { color: var(--gray-500); font-size: 14px; margin-bottom: 28px; }
+  .setup-note { font-size: 12px; color: var(--gray-400); margin-top: 6px; }
+
+  /* INLINE EDIT */
+  .inline-edit {
+    display: inline-block; border: 1px solid transparent; border-radius: 4px;
+    padding: 2px 6px; cursor: text; min-width: 60px;
+    transition: border-color 0.15s;
+  }
+  .inline-edit:hover { border-color: var(--gray-300); background: var(--gray-100); }
+  .inline-edit:focus { outline: none; border-color: var(--accent); background: white; }
+
+  /* ANALIZAR MODAL */
+  #analizar-texto { min-height: 160px; font-family: inherit; }
+
+  /* LOADING */
+  .loading-dots::after {
+    content: '...';
+    animation: dots 1.2s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  /* FASE CURRENT INDICATOR */
+  .fase-actual-badge {
+    display: inline-block; background: var(--primary); color: white;
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;
+    margin-left: 8px;
+  }
+
+  /* TRANSPORT SELECTOR */
+  .transport-option {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border: 1px solid var(--gray-300); border-radius: var(--radius); cursor: pointer;
+    transition: all 0.15s; margin-bottom: 8px;
+  }
+  .transport-option:has(input:checked) { border-color: var(--accent); background: #f0faf6; }
+
+  .mini-section { margin-bottom: 20px; }
+  .mini-section-title { font-size: 13px; font-weight: 700; color: var(--gray-700); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">🚐 MendiVan CRM</div>
+    <div class="setup-sub">Gestión de importaciones de vehículos</div>
+    <div class="config-section">
+      <h3>Configuración inicial</h3>
+      <div class="form-group">
+        <label class="form-label">GitHub Personal Access Token</label>
+        <input type="password" class="form-control" id="setup-gh-token" placeholder="ghp_xxxxxxxxxxxx">
+        <div class="setup-note">Necesitas permisos de escritura en el repo <code>mendivan/MendiVan</code></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Anthropic API Key</label>
+        <input type="password" class="form-control" id="setup-ai-key" placeholder="sk-ant-xxxxxxxxxxxx">
+        <div class="setup-note">Para el asistente IA en la ficha de vehículo</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSetup()" style="width:100%">Guardar y empezar</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-brand">🚐 MendiVan</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('crm')">👥 CRM</button>
+    <button class="nav-tab disabled">🧮 Calculadora</button>
+    <button class="nav-tab disabled">📋 Contratos</button>
+    <button class="nav-tab disabled">📊 Contabilidad</button>
+  </div>
+  <div class="nav-right">
+    <span id="save-indicator"></span>
+    <button class="btn-icon" onclick="showConfig()" title="Configuración">⚙️</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main" style="margin-top:72px">
+
+  <!-- VIEW: CRM LIST -->
+  <div id="crm-view" class="view active">
+    <div class="section-header">
+      <h1 class="section-title">Clientes</h1>
+      <button class="btn btn-primary" onclick="showNuevoClienteModal()">+ Nuevo cliente</button>
+    </div>
+    <div id="search-bar">
+      <input type="text" id="search-input" placeholder="Buscar por nombre, teléfono o localidad..." oninput="renderClientesList()">
+    </div>
+    <div id="clientes-grid" class="clientes-grid"></div>
+  </div>
+
+  <!-- VIEW: FICHA CLIENTE -->
+  <div id="ficha-cliente-view" class="view">
+    <div class="back-btn" onclick="showView('crm')">← Volver a clientes</div>
+    <div class="ficha-header">
+      <div>
+        <div class="ficha-title" id="fc-nombre">—</div>
+        <div style="margin-top:6px" id="fc-pipeline-badge"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="editarCliente()">✏️ Editar datos</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarCliente()">🗑 Eliminar</button>
+      </div>
+    </div>
+    <div class="tabs-inner">
+      <div class="tab-inner active" onclick="switchClienteTab('info')">Datos</div>
+      <div class="tab-inner" onclick="switchClienteTab('vehiculos')">Vehículos</div>
+      <div class="tab-inner" onclick="switchClienteTab('notas')">Notas</div>
+    </div>
+    <div id="cliente-tab-info" class="cliente-tab"></div>
+    <div id="cliente-tab-vehiculos" class="cliente-tab" style="display:none"></div>
+    <div id="cliente-tab-notas" class="cliente-tab" style="display:none"></div>
+  </div>
+
+  <!-- VIEW: FICHA VEHICULO -->
+  <div id="ficha-vehiculo-view" class="view">
+    <div class="back-btn" id="veh-back-btn" onclick="backToCliente()">← Volver al cliente</div>
+    <div class="ficha-header">
+      <div>
+        <div class="ficha-title" id="fv-titulo">—</div>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center" id="fv-badges"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="eliminarVehiculo()">🗑 Eliminar</button>
+      </div>
+    </div>
+    <div id="fv-alertas" class="alertas-panel"></div>
+    <div class="vehiculo-grid">
+      <div id="fv-left"></div>
+      <div id="fv-right"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODALS -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="closeModalOnOverlay(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// =========================================================
+// CONSTANTS
+// =========================================================
+const GH_USER = 'mendivan';
+const GH_REPO = 'MendiVan';
+const GH_BRANCH = 'main';
+const AI_MODEL = 'claude-sonnet-4-6';
+
+const PIPELINE_ESTADOS = ['nuevo','contactado','buscando','negociando','contratado','entregado','perdido'];
+const PIPELINE_LABELS = {
+  nuevo:'Nuevo', contactado:'Contactado', buscando:'Buscando',
+  negociando:'Negociando', contratado:'Contratado', entregado:'Entregado', perdido:'Perdido'
+};
+
+const CANALES = ['WhatsApp','Instagram','Facebook','Web','Referido','Llamada','Otro'];
+const USOS = ['Familiar','Furgoneta camperizada','Carga/comercial','Todoterreno','Deportivo','Otro'];
+const CARROCERIAS = ['Berlina','Familiar/Kombi','SUV','Furgoneta','Todoterreno','Cabrio','Coupé','Monovolumen','Pick-up'];
+const COMBUSTIBLES = ['Diésel','Gasolina','Híbrido','Eléctrico','GLP','Otro'];
+const ESTADOS_VEH = ['activo','descartado','seleccionado'];
+const MODALIDADES = ['camion','conduccion'];
+
+const FASES = [
+  { id: 0, label: 'Fase 0 · Onboarding', tareas: [
+    { id:'lead_notion', label:'Lead registrado en Notion CRM' },
+    { id:'whatsapp_calendly', label:'Contacto por WhatsApp + envío Calendly' },
+    { id:'llamada_cualif', label:'Llamada de cualificación realizada → ficha completada' },
+    { id:'proceso_explicado', label:'Proceso explicado + búsqueda gratuita confirmada' },
+  ]},
+  { id: 1, label: 'Fase 1 · Búsqueda', tareas: [
+    { id:'busqueda_activa', label:'Búsqueda activa en mobile.de' },
+    { id:'candidatos_enviados', label:'Candidatos enviados al cliente por WhatsApp' },
+    { id:'llamada_concesionario', label:'Llamada al concesionario (propietarios, ZB I y II, accidentes, COC, originalidad)' },
+    { id:'cliente_aprueba', label:'Cliente aprueba unidad' },
+  ]},
+  { id: 2, label: 'Fase 2 · Presupuesto y Revisión', tareas: [
+    { id:'presupuesto_enviado', label:'Presupuesto calculado y enviado (proforma)' },
+    { id:'cliente_aprueba_ppto', label:'Cliente aprueba presupuesto' },
+    { id:'carvertical', label:'CarVertical encargado y revisado' },
+    { id:'revision_encargada', label:'Revisión física encargada (CertifyCar / TÜV NORD)' },
+    { id:'informe_analizado', label:'Informe de revisión analizado' },
+    { id:'resultado_comunicado', label:'Resultado comunicado al cliente → GO / NO GO' },
+  ]},
+  { id: 3, label: 'Fase 3 · Contrato y Pago', tareas: [
+    { id:'contrato_firmado', label:'Contrato MendiVan firmado' },
+    { id:'dni_recibido', label:'DNI del cliente recibido' },
+    { id:'pago1', label:'50% honorarios cobrado (Pago 1)' },
+    { id:'cliente_paga_concesionario', label:'Cliente paga vehículo al concesionario' },
+    { id:'factura_alemana', label:'Factura alemana recibida' },
+    { id:'gelangensbestatigung', label:'Gelangensbestätigung confirmada' },
+  ]},
+  { id: 4, label: 'Fase 4 · Importación y Transporte', tareas: [
+    { id:'camion_empresa', label:'[Camión] Empresa contratada' },
+    { id:'camion_fecha', label:'[Camión] Fecha coordinada' },
+    { id:'camion_entrega', label:'[Camión] Entrega en Bilbao confirmada' },
+    { id:'conduccion_vuelo', label:'[Conducción] Vuelo reservado' },
+    { id:'conduccion_aloj', label:'[Conducción] Alojamiento reservado' },
+    { id:'conduccion_matricula', label:'[Conducción] Matrícula exportación gestionada' },
+    { id:'conduccion_gastos', label:'[Conducción] Gasolina y peajes calculados' },
+    { id:'estado_llegada', label:'Estado verificado a la llegada' },
+    { id:'docs_llegada', label:'Documentación comprobada (ZB I, ZB II, COC, llaves)' },
+    { id:'fotos_llegada', label:'Fotos de llegada realizadas' },
+  ]},
+  { id: 5, label: 'Fase 5 · Matriculación', tareas: [
+    { id:'docs_itv', label:'Documentación enviada a la ITV' },
+    { id:'itv_realizada', label:'ITV realizada → ficha técnica española obtenida' },
+    { id:'docs_gestoria', label:'Documentación enviada a gestoría (José Antonio) para 576, IVTM y DGT' },
+    { id:'permiso_provisional', label:'Permiso de circulación provisional recibido' },
+    { id:'matricula_provisional', label:'Matrícula provisional colocada' },
+  ]},
+  { id: 6, label: 'Fase 6 · Entrega', tareas: [
+    { id:'pago2', label:'50% restante cobrado (Pago 2)' },
+    { id:'factura_final', label:'Factura final MendiVan emitida' },
+    { id:'entrega_realizada', label:'Vehículo entregado con documentación completa' },
+    { id:'mantenimiento_explicado', label:'Mantenimiento clave explicado al cliente' },
+    { id:'foto_entrega', label:'Foto/vídeo de entrega para RRSS' },
+    { id:'resena_solicitada', label:'Reseña Google solicitada a los 15-30 días' },
+  ]},
+];
+
+// =========================================================
+// STATE
+// =========================================================
+let clientes = {};
+let vehiculos = {};
+let currentClienteId = null;
+let currentVehiculoId = null;
+let chatHistory = {};
+let saveDebounceTimer = null;
+let pendingSaves = new Set();
+
+// =========================================================
+// INIT
+// =========================================================
+async function init() {
+  const token = localStorage.getItem('gh_token');
+  const aiKey = localStorage.getItem('ai_key');
+  if (!token || !aiKey) {
+    document.getElementById('setup-screen').style.display = 'flex';
+    return;
+  }
+  document.getElementById('setup-screen').style.display = 'none';
+  await loadAllData();
+  renderClientesList();
+}
+
+function saveSetup() {
+  const token = document.getElementById('setup-gh-token').value.trim();
+  const aiKey = document.getElementById('setup-ai-key').value.trim();
+  if (!token || !aiKey) { toast('Completa ambos campos', 'error'); return; }
+  localStorage.setItem('gh_token', token);
+  localStorage.setItem('ai_key', aiKey);
+  document.getElementById('setup-screen').style.display = 'none';
+  loadAllData().then(() => renderClientesList());
+  toast('Configuración guardada', 'success');
+}
+
+// =========================================================
+// GITHUB API
+// =========================================================
+function ghHeaders() {
+  return {
+    'Authorization': `token ${localStorage.getItem('gh_token')}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+  };
+}
+
+async function ghGet(path) {
+  const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
+  const res = await fetch(url, { headers: ghHeaders() });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GitHub GET ${path}: ${res.status}`);
+  return res.json();
+}
+
+async function ghPut(path, content, sha) {
+  const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
+  const body = {
+    message: `CRM update: ${path}`,
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+    branch: GH_BRANCH,
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(url, { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub PUT ${path}: ${res.status}`);
+  }
+  return res.json();
+}
+
+async function ghDelete(path, sha) {
+  const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
+  const body = { message: `CRM delete: ${path}`, sha, branch: GH_BRANCH };
+  const res = await fetch(url, { method: 'DELETE', headers: ghHeaders(), body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
+}
+
+async function ghListDir(path) {
+  const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
+  const res = await fetch(url, { headers: ghHeaders() });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`GitHub LIST ${path}: ${res.status}`);
+  return res.json();
+}
+
+// =========================================================
+// DATA LOAD / SAVE
+// =========================================================
+const shaCache = {};
+
+async function loadAllData() {
+  setSaveIndicator('saving', 'Cargando...');
+  try {
+    const [cFiles, vFiles] = await Promise.all([
+      ghListDir('data/clientes').catch(() => []),
+      ghListDir('data/vehiculos').catch(() => []),
+    ]);
+
+    const cPromises = cFiles.filter(f => f.name.endsWith('.json')).map(async f => {
+      try {
+        const raw = await ghGet(f.path);
+        if (!raw) return;
+        shaCache[f.path] = raw.sha;
+        const data = JSON.parse(atob(raw.content.replace(/\n/g,'')));
+        clientes[data.id] = data;
+        // local fallback merge
+        const local = localGet('cliente_' + data.id);
+        if (local && local._localOnly) clientes[data.id] = { ...data, ...local };
+      } catch(e) { console.warn('Error loading', f.path, e); }
+    });
+
+    const vPromises = vFiles.filter(f => f.name.endsWith('.json')).map(async f => {
+      try {
+        const raw = await ghGet(f.path);
+        if (!raw) return;
+        shaCache[f.path] = raw.sha;
+        const data = JSON.parse(atob(raw.content.replace(/\n/g,'')));
+        vehiculos[data.id] = data;
+      } catch(e) { console.warn('Error loading', f.path, e); }
+    });
+
+    await Promise.all([...cPromises, ...vPromises]);
+
+    // Load local-only entries
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('cliente_') && !clientes[key.slice(8)]) {
+        const d = localGet(key.slice(8));
+        if (d) clientes[d.id] = d;
+      }
+      if (key.startsWith('vehiculo_') && !vehiculos[key.slice(9)]) {
+        const d = localGet('veh_' + key.slice(9));
+        if (d) vehiculos[d.id] = d;
+      }
+    }
+
+    setSaveIndicator('saved', 'Datos cargados ✓');
+  } catch(e) {
+    console.error(e);
+    setSaveIndicator('error', 'Error al cargar');
+    toast('Error al cargar datos de GitHub. Usando datos locales.', 'error');
+    loadLocalFallback();
+  }
+}
+
+function loadLocalFallback() {
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith('cliente_')) { const d = localGet(key.slice(8)); if (d) clientes[d.id] = d; }
+    if (key.startsWith('vehiculo_')) { const d = localGet('veh_' + key.slice(9)); if (d) vehiculos[d.id] = d; }
+  }
+}
+
+async function saveCliente(id) {
+  const c = clientes[id];
+  if (!c) return;
+  c.fecha_ultima_interaccion = new Date().toISOString();
+  const path = `data/clientes/${id}.json`;
+  localSet('cliente_' + id, c);
+  setSaveIndicator('saving', 'Guardando...');
+  try {
+    const existing = await ghGet(path);
+    const sha = existing ? existing.sha : undefined;
+    await ghPut(path, c, sha);
+    shaCache[path] = (await ghGet(path))?.sha;
+    setSaveIndicator('saved', 'Guardado ✓');
+  } catch(e) {
+    console.warn('GitHub save failed, stored locally', e);
+    setSaveIndicator('error', '⚠ Solo local');
+    toast('No se pudo guardar en GitHub. Guardado en local.', 'warning');
+  }
+}
+
+async function saveVehiculo(id) {
+  const v = vehiculos[id];
+  if (!v) return;
+  v.fecha_ultima_actualizacion = new Date().toISOString();
+  const path = `data/vehiculos/${id}.json`;
+  localSet('vehiculo_' + id, v);
+  setSaveIndicator('saving', 'Guardando...');
+  try {
+    const existing = await ghGet(path);
+    const sha = existing ? existing.sha : undefined;
+    await ghPut(path, v, sha);
+    shaCache[path] = (await ghGet(path))?.sha;
+    setSaveIndicator('saved', 'Guardado ✓');
+  } catch(e) {
+    console.warn('GitHub save failed, stored locally', e);
+    setSaveIndicator('error', '⚠ Solo local');
+    toast('No se pudo guardar en GitHub. Guardado en local.', 'warning');
+  }
+}
+
+function debounceSave(type, id) {
+  clearTimeout(saveDebounceTimer);
+  pendingSaves.add(`${type}:${id}`);
+  setSaveIndicator('saving', 'Guardando...');
+  saveDebounceTimer = setTimeout(async () => {
+    for (const key of pendingSaves) {
+      const [t, i] = key.split(':');
+      if (t === 'cliente') await saveCliente(i);
+      else if (t === 'vehiculo') await saveVehiculo(i);
+    }
+    pendingSaves.clear();
+  }, 1000);
+}
+
+// =========================================================
+// LOCAL STORAGE HELPERS
+// =========================================================
+function localSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+function localGet(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+
+// =========================================================
+// SAVE INDICATOR
+// =========================================================
+function setSaveIndicator(state, text) {
+  const el = document.getElementById('save-indicator');
+  el.textContent = text;
+  el.className = state;
+  if (state === 'saved') setTimeout(() => { el.textContent = ''; el.className = ''; }, 3000);
+}
+
+// =========================================================
+// TOAST
+// =========================================================
+function toast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// =========================================================
+// VIEWS
+// =========================================================
+function showView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(view + '-view').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i) => { if (i===0) t.classList[view==='crm'?'add':'remove']('active'); });
+}
+
+// =========================================================
+// ID GENERATOR
+// =========================================================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// =========================================================
+// FECHA UTILS
+// =========================================================
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' });
+}
+function daysSince(iso) {
+  if (!iso) return 999;
+  return Math.floor((Date.now() - new Date(iso)) / 86400000);
+}
+
+// =========================================================
+// PIPELINE BADGE
+// =========================================================
+function pipelineBadge(estado) {
+  const label = PIPELINE_LABELS[estado] || estado;
+  return `<span class="badge pipeline-${estado}">${label}</span>`;
+}
+
+// =========================================================
+// ALERTAS ENGINE
+// =========================================================
+function calcAlertasVehiculo(v, c) {
+  const alerts = [];
+  const fase = v.fase_actual || 0;
+  const dias = daysSince(v.fecha_ultima_actualizacion);
+
+  if (v.estado === 'activo' && dias > 5)
+    alerts.push({ msg: `Sin actualizar hace ${dias} días`, level:'warn' });
+
+  if (fase > 2 && !vTarea(v,'dni_recibido'))
+    alerts.push({ msg:'Falta DNI del cliente antes de Fase 3', level:'danger' });
+
+  if (!v.tiene_coc && v.ventanas_originales === false)
+    alerts.push({ msg:'Sin COC y tiene ventanas laterales — verificar legalidad importación', level:'danger' });
+
+  const km_cv = parseInt(v.km) || 0;
+  const km_car = parseInt(v.km_carvertical) || 0;
+  if (km_car && Math.abs(km_cv - km_car) > 20000)
+    alerts.push({ msg:`CarVertical muestra discrepancia de km > 20.000 (odómetro: ${km_cv.toLocaleString()} vs CarVertical: ${km_car.toLocaleString()})`, level:'danger' });
+
+  if (v.pintura_excedida)
+    alerts.push({ msg:'Informe de revisión: pintura >150µm en zonas estructurales', level:'danger' });
+
+  if (v.tipo_carroceria === 'Furgoneta' && v.uso_wohnmobil && !v.iedmt_calculado)
+    alerts.push({ msg:'Vehículo M1 Wohnmobil: no se ha calculado la bonificación IEDMT 30%', level:'warn' });
+
+  return alerts;
+}
+
+function vTarea(v, id) {
+  return v.tareas && v.tareas[id];
+}
+
+// =========================================================
+// CLIENTES LIST VIEW
+// =========================================================
+function renderClientesList() {
+  const query = (document.getElementById('search-input').value || '').toLowerCase();
+  const grid = document.getElementById('clientes-grid');
+
+  const list = Object.values(clientes).filter(c => {
+    if (!query) return true;
+    return (c.nombre || '').toLowerCase().includes(query) ||
+           (c.telefono || '').includes(query) ||
+           (c.localidad || '').toLowerCase().includes(query);
+  }).sort((a,b) => (b.fecha_ultima_interaccion || '').localeCompare(a.fecha_ultima_interaccion || ''));
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">👥</div><p>No hay clientes todavía.<br>Crea el primero con el botón "Nuevo cliente".</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(c => {
+    const vehicActivos = Object.values(vehiculos).filter(v => v.cliente_id === c.id && v.estado === 'activo').length;
+    const dias = daysSince(c.fecha_ultima_interaccion);
+    const stale = dias > 5;
+    const proximaAccion = c.proxima_accion || '—';
+    return `<div class="cliente-card ${stale ? 'stale' : ''}" onclick="openCliente('${c.id}')">
+      <div>
+        <div class="cliente-name">${esc(c.nombre || 'Sin nombre')}${stale ? ' <span title="Sin actualizar hace '+dias+' días" style="color:var(--highlight)">⚠</span>' : ''}</div>
+        <div class="cliente-meta">
+          <span>📞 ${esc(c.telefono || '—')}</span>
+          <span>📍 ${esc(c.localidad || '—')}</span>
+          <span>🚗 ${vehicActivos} activo${vehicActivos !== 1 ? 's' : ''}</span>
+          <span>📅 ${formatDate(c.fecha_ultima_interaccion)}</span>
+        </div>
+        <div class="cliente-meta" style="margin-top:4px">
+          <span>→ ${esc(proximaAccion)}</span>
+        </div>
+      </div>
+      <div class="cliente-actions">
+        ${pipelineBadge(c.estado_pipeline || 'nuevo')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =========================================================
+// OPEN CLIENTE
+// =========================================================
+function openCliente(id) {
+  currentClienteId = id;
+  const c = clientes[id];
+  if (!c) return;
+  document.getElementById('fc-nombre').textContent = c.nombre || 'Sin nombre';
+  document.getElementById('fc-pipeline-badge').innerHTML = pipelineBadge(c.estado_pipeline || 'nuevo');
+
+  // Reset tabs
+  document.querySelectorAll('.tab-inner').forEach((t,i) => t.classList[i===0?'add':'remove']('active'));
+  switchClienteTab('info');
+  showView('ficha-cliente');
+}
+
+function switchClienteTab(tab) {
+  document.querySelectorAll('.tab-inner').forEach(t => {
+    t.classList.toggle('active', t.textContent.toLowerCase().includes(tab === 'info' ? 'datos' : tab === 'vehiculos' ? 'veh' : 'not'));
+    if (tab === 'info' && t.textContent.includes('Datos')) t.classList.add('active');
+    if (tab === 'vehiculos' && t.textContent.includes('Vehíc')) t.classList.add('active');
+    if (tab === 'notas' && t.textContent.includes('Notas')) t.classList.add('active');
+  });
+  document.querySelectorAll('.cliente-tab').forEach(el => el.style.display = 'none');
+  document.getElementById(`cliente-tab-${tab}`).style.display = 'block';
+
+  if (tab === 'info') renderClienteInfo();
+  else if (tab === 'vehiculos') renderClienteVehiculos();
+  else if (tab === 'notas') renderClienteNotas();
+}
+
+function renderClienteInfo() {
+  const c = clientes[currentClienteId];
+  if (!c) return;
+  const el = document.getElementById('cliente-tab-info');
+  el.innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+      <div class="mini-section-title">Datos de contacto</div>
+      <div class="form-row">
+        ${fld('nombre','Nombre',c.nombre,'text',currentClienteId,'cliente')}
+        ${fld('telefono','Teléfono',c.telefono,'tel',currentClienteId,'cliente')}
+        ${fld('email','Email',c.email,'email',currentClienteId,'cliente')}
+        ${fld('localidad','Localidad',c.localidad,'text',currentClienteId,'cliente')}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Canal de entrada</label>
+        <select class="form-control" onchange="updateField('${currentClienteId}','cliente','canal_entrada',this.value)">
+          ${CANALES.map(ch => `<option ${c.canal_entrada===ch?'selected':''}>${ch}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado pipeline</label>
+        <select class="form-control" onchange="updatePipeline(this.value)">
+          ${PIPELINE_ESTADOS.map(s => `<option value="${s}" ${c.estado_pipeline===s?'selected':''}>${PIPELINE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+      ${fld('proxima_accion','Próxima acción',c.proxima_accion,'text',currentClienteId,'cliente')}
+      <div class="form-row">
+        ${fld('fecha_primer_contacto','Primer contacto',c.fecha_primer_contacto?.slice(0,10),'date',currentClienteId,'cliente')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="mini-section-title">Búsqueda</div>
+      ${fld('busca_tipo_vehiculo','Tipo vehículo',c.busca?.tipo_vehiculo||'','text',currentClienteId,'cliente','busca_tipo_vehiculo')}
+      ${fld('busca_modelos','Modelos de interés',c.busca?.modelos||'','text',currentClienteId,'cliente','busca_modelos')}
+      <div class="form-row">
+        ${fld('busca_anyo_min','Año mínimo',c.busca?.anyo_min||'','number',currentClienteId,'cliente','busca_anyo_min')}
+        ${fld('busca_anyo_max','Año máximo',c.busca?.anyo_max||'','number',currentClienteId,'cliente','busca_anyo_max')}
+        ${fld('busca_km_max','Km máximo',c.busca?.km_max||'','number',currentClienteId,'cliente','busca_km_max')}
+        ${fld('busca_presupuesto','Presupuesto total (€)',c.busca?.presupuesto_total||'','number',currentClienteId,'cliente','busca_presupuesto')}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Uso previsto</label>
+        <select class="form-control" onchange="updateField('${currentClienteId}','cliente','busca_uso',this.value)">
+          <option value="">— Seleccionar —</option>
+          ${USOS.map(u => `<option ${(c.busca?.uso_previsto||'')=== u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Preferencias / notas búsqueda</label>
+        <textarea class="form-control" rows="3" onchange="updateField('${currentClienteId}','cliente','busca_preferencias',this.value)">${esc(c.busca?.preferencias||'')}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderClienteVehiculos() {
+  const c = clientes[currentClienteId];
+  const vList = Object.values(vehiculos).filter(v => v.cliente_id === currentClienteId);
+  const el = document.getElementById('cliente-tab-vehiculos');
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="showNuevoVehiculoModal()">+ Añadir vehículo</button>
+    </div>
+    <div class="vehiculos-list">
+      ${vList.length === 0
+        ? '<div class="empty-state"><div class="icon">🚗</div><p>Sin vehículos vinculados todavía.</p></div>'
+        : vList.map(v => `
+          <div class="vehiculo-row ${v.estado}" onclick="openVehiculo('${v.id}')">
+            <div class="vehiculo-info">
+              <div class="vehiculo-name">${esc(v.marca||'')} ${esc(v.modelo||'')} ${v.anyo||''}</div>
+              <div class="vehiculo-meta">
+                ${v.km ? v.km.toLocaleString() + ' km · ' : ''}
+                ${v.combustible||''} ·
+                Fase ${v.fase_actual||0} ·
+                ${formatDate(v.fecha_ultima_actualizacion)}
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge ${v.estado==='activo'?'badge-green':v.estado==='seleccionado'?'badge-blue':'badge-gray'}">${v.estado}</span>
+              ${daysSince(v.fecha_ultima_actualizacion) > 5 && v.estado === 'activo' ? '<span title="Sin actualizar">⚠️</span>' : ''}
+            </div>
+          </div>`).join('')}
+    </div>`;
+}
+
+function renderClienteNotas() {
+  const c = clientes[currentClienteId];
+  const notas = c.notas || [];
+  const el = document.getElementById('cliente-tab-notas');
+  el.innerHTML = `
+    <div class="nota-add">
+      <textarea class="form-control" id="nueva-nota-input" placeholder="Escribe una nota..." rows="2"></textarea>
+      <button class="btn btn-primary" onclick="addNota()">Añadir</button>
+    </div>
+    <div class="notas-list">
+      ${notas.length === 0
+        ? '<div class="empty-state"><div class="icon">📝</div><p>Sin notas todavía.</p></div>'
+        : [...notas].reverse().map((n,i) => `
+          <div class="nota-item">
+            <div class="nota-date">${formatDate(n.fecha)}</div>
+            <div>${esc(n.texto)}</div>
+          </div>`).join('')}
+    </div>`;
+}
+
+function addNota() {
+  const c = clientes[currentClienteId];
+  if (!c) return;
+  const input = document.getElementById('nueva-nota-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+  if (!c.notas) c.notas = [];
+  c.notas.push({ fecha: new Date().toISOString(), texto });
+  input.value = '';
+  debounceSave('cliente', currentClienteId);
+  renderClienteNotas();
+}
+
+function updatePipeline(val) {
+  const c = clientes[currentClienteId];
+  if (!c) return;
+  c.estado_pipeline = val;
+  document.getElementById('fc-pipeline-badge').innerHTML = pipelineBadge(val);
+  debounceSave('cliente', currentClienteId);
+}
+
+// Generic field update
+function updateField(id, type, field, value) {
+  const obj = type === 'cliente' ? clientes[id] : vehiculos[id];
+  if (!obj) return;
+  // Handle nested busca fields
+  if (field.startsWith('busca_')) {
+    if (!obj.busca) obj.busca = {};
+    const subfield = field.slice(6);
+    const map = { tipo_vehiculo:'tipo_vehiculo', modelos:'modelos', anyo_min:'anyo_min', anyo_max:'anyo_max', km_max:'km_max', presupuesto:'presupuesto_total', uso:'uso_previsto', preferencias:'preferencias' };
+    obj.busca[map[subfield] || subfield] = value;
+  } else {
+    obj[field] = value;
+  }
+  debounceSave(type, id);
+}
+
+// Field helper for inline editable fields
+function fld(name, label, value, type, id, objType, specialField) {
+  const sf = specialField || name;
+  return `<div class="form-group">
+    <label class="form-label">${label}</label>
+    <input type="${type}" class="form-control" value="${esc(value||'')}"
+      onchange="updateField('${id}','${objType}','${sf}',this.value)">
+  </div>`;
+}
+
+// =========================================================
+// VEHICULO
+// =========================================================
+function openVehiculo(id) {
+  currentVehiculoId = id;
+  const v = vehiculos[id];
+  const c = clientes[v.cliente_id];
+  if (!v) return;
+
+  document.getElementById('fv-titulo').textContent = `${v.marca||''} ${v.modelo||''} ${v.anyo||''}`.trim() || 'Vehículo sin nombre';
+  document.getElementById('veh-back-btn').onclick = () => { openCliente(v.cliente_id); switchClienteTab('vehiculos'); };
+
+  const badges = document.getElementById('fv-badges');
+  badges.innerHTML = `
+    <span class="badge ${v.estado==='activo'?'badge-green':v.estado==='seleccionado'?'badge-blue':'badge-gray'}">${v.estado||'activo'}</span>
+    <span class="badge badge-gray">Fase ${v.fase_actual||0}</span>
+    ${v.link_mobile ? `<a href="${esc(v.link_mobile)}" target="_blank" class="link-ext">🔗 mobile.de</a>` : ''}`;
+
+  renderAlertasVehiculo(v, c);
+  renderFichaVehiculoLeft(v, c);
+  renderFichaVehiculoRight(v, c);
+  showView('ficha-vehiculo');
+}
+
+function backToCliente() {
+  const v = vehiculos[currentVehiculoId];
+  if (v) { openCliente(v.cliente_id); switchClienteTab('vehiculos'); }
+  else showView('crm');
+}
+
+function renderAlertasVehiculo(v, c) {
+  const alertas = calcAlertasVehiculo(v, c || {});
+  const el = document.getElementById('fv-alertas');
+  if (!alertas.length) { el.innerHTML = ''; return; }
+  el.innerHTML = alertas.map(a => `
+    <div class="alerta-item ${a.level === 'danger' ? 'danger' : ''}">
+      <span class="alerta-icon">${a.level === 'danger' ? '🚨' : '⚠️'}</span>
+      <span>${esc(a.msg)}</span>
+    </div>`).join('');
+}
+
+function renderFichaVehiculoLeft(v, c) {
+  const el = document.getElementById('fv-left');
+  const id = v.id;
+  el.innerHTML = `
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title">Datos del vehículo</div>
+    <div class="form-row">
+      ${fld('marca','Marca',v.marca,'text',id,'vehiculo')}
+      ${fld('modelo','Modelo',v.modelo,'text',id,'vehiculo')}
+      ${fld('anyo','Año',v.anyo,'number',id,'vehiculo')}
+      ${fld('km','Kilómetros',v.km,'number',id,'vehiculo')}
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Carrocería</label>
+        <select class="form-control" onchange="updateField('${id}','vehiculo','tipo_carroceria',this.value)">
+          ${CARROCERIAS.map(x => `<option ${v.tipo_carroceria===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Combustible</label>
+        <select class="form-control" onchange="updateField('${id}','vehiculo','combustible',this.value)">
+          ${COMBUSTIBLES.map(x => `<option ${v.combustible===x?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      ${fld('potencia_cv','Potencia (CV)',v.potencia_cv,'number',id,'vehiculo')}
+      ${fld('co2','CO₂ (g/km)',v.co2,'number',id,'vehiculo')}
+    </div>
+    <div class="form-row">
+      ${fld('precio_alemania','Precio Alemania (€)',v.precio_alemania,'number',id,'vehiculo')}
+      ${fld('concesionario','Concesionario',v.concesionario,'text',id,'vehiculo')}
+    </div>
+    ${fld('link_mobile','Link mobile.de',v.link_mobile,'url',id,'vehiculo')}
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-control" onchange="updateVehEstado(this.value)">
+          ${ESTADOS_VEH.map(s => `<option value="${s}" ${v.estado===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:4px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" ${v.tiene_coc?'checked':''} onchange="updateField('${id}','vehiculo','tiene_coc',this.checked)"> Tiene COC
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" ${v.tiene_scheckheft?'checked':''} onchange="updateField('${id}','vehiculo','tiene_scheckheft',this.checked)"> Scheckheft completo
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" ${v.ventanas_originales===false?'':'checked'} onchange="updateField('${id}','vehiculo','ventanas_originales',this.checked)"> Ventanas originales
+      </label>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title">Modalidad de transporte</div>
+    <div style="display:flex;gap:12px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="radio" name="modalidad_${id}" value="camion" ${(v.modalidad_transporte||'camion')==='camion'?'checked':''} onchange="updateField('${id}','vehiculo','modalidad_transporte',this.value)"> 🚛 Camión
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="radio" name="modalidad_${id}" value="conduccion" ${v.modalidad_transporte==='conduccion'?'checked':''} onchange="updateField('${id}','vehiculo','modalidad_transporte',this.value)"> 🚗 Conducción propia
+      </label>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title" style="margin-bottom:12px">Fase actual</div>
+    <div class="fase-selector">
+      ${FASES.map(f => {
+        const completadas = f.tareas.filter(t => v.tareas && v.tareas[t.id]).length;
+        const total = f.tareas.length;
+        const done = completadas === total;
+        return `<button class="fase-btn ${(v.fase_actual||0)===f.id?'active':done?'completed':''}" onclick="setFaseActual(${f.id})">${f.id}</button>`;
+      }).join('')}
+    </div>
+    ${FASES.map(f => renderFaseBlock(v, f)).join('')}
+  </div>
+
+  <div class="card">
+    <div class="mini-section-title">Notas del vehículo</div>
+    <div class="nota-add">
+      <textarea class="form-control" id="nueva-nota-veh-input" placeholder="Escribe una nota..." rows="2"></textarea>
+      <button class="btn btn-primary" onclick="addNotaVehiculo()">Añadir</button>
+    </div>
+    <div class="notas-list">
+      ${(v.notas_veh||[]).length === 0
+        ? '<p style="color:var(--gray-400);font-size:13px">Sin notas.</p>'
+        : [...(v.notas_veh||[])].reverse().map(n => `
+          <div class="nota-item">
+            <div class="nota-date">${formatDate(n.fecha)}</div>
+            <div>${esc(n.texto)}</div>
+          </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderFaseBlock(v, f) {
+  const completadas = f.tareas.filter(t => v.tareas && v.tareas[t.id]).length;
+  const total = f.tareas.length;
+  const isCurrentFase = (v.fase_actual||0) === f.id;
+  const open = isCurrentFase || completadas > 0;
+  return `<div class="fase-block">
+    <div class="fase-header" onclick="toggleFase(this)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="fase-title">${f.label}</span>
+        ${isCurrentFase ? '<span class="fase-actual-badge">ACTUAL</span>' : ''}
+      </div>
+      <span class="fase-progress">${completadas}/${total} ✓</span>
+    </div>
+    <div class="fase-body ${open ? 'open' : ''}">
+      ${f.tareas.map(t => `
+        <div class="tarea-item">
+          <input type="checkbox" class="tarea-check" id="t_${t.id}" ${v.tareas && v.tareas[t.id] ? 'checked' : ''}
+            onchange="toggleTarea('${t.id}', this.checked)">
+          <label for="t_${t.id}" class="tarea-label ${v.tareas && v.tareas[t.id] ? 'done' : ''}">${t.label}</label>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function toggleFase(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function setFaseActual(fase) {
+  const v = vehiculos[currentVehiculoId];
+  if (!v) return;
+  v.fase_actual = fase;
+  debounceSave('vehiculo', currentVehiculoId);
+  // Re-render
+  openVehiculo(currentVehiculoId);
+}
+
+function toggleTarea(tareaId, checked) {
+  const v = vehiculos[currentVehiculoId];
+  if (!v) return;
+  if (!v.tareas) v.tareas = {};
+  v.tareas[tareaId] = checked;
+  debounceSave('vehiculo', currentVehiculoId);
+  // Update progress counts without full re-render
+  renderAlertasVehiculo(v, clientes[v.cliente_id] || {});
+  // Update fase-selector buttons
+  const sel = document.querySelector('.fase-selector');
+  if (sel) {
+    FASES.forEach((f, fi) => {
+      const btn = sel.children[fi];
+      if (btn) {
+        const completadas = f.tareas.filter(t => v.tareas && v.tareas[t.id]).length;
+        const done = completadas === f.tareas.length;
+        btn.className = `fase-btn ${(v.fase_actual||0)===f.id?'active':done?'completed':''}`;
+      }
+    });
+  }
+  // Update progress label in the fase header
+  const headers = document.querySelectorAll('.fase-header .fase-progress');
+  FASES.forEach((f, fi) => {
+    if (headers[fi]) {
+      const completadas = f.tareas.filter(t => v.tareas && v.tareas[t.id]).length;
+      headers[fi].textContent = `${completadas}/${f.tareas.length} ✓`;
+    }
+  });
+  // Update label style
+  const label = document.querySelector(`label[for="t_${tareaId}"]`);
+  if (label) label.className = `tarea-label ${checked ? 'done' : ''}`;
+}
+
+function updateVehEstado(val) {
+  const v = vehiculos[currentVehiculoId];
+  if (!v) return;
+  v.estado = val;
+  debounceSave('vehiculo', currentVehiculoId);
+}
+
+function addNotaVehiculo() {
+  const v = vehiculos[currentVehiculoId];
+  if (!v) return;
+  const input = document.getElementById('nueva-nota-veh-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+  if (!v.notas_veh) v.notas_veh = [];
+  v.notas_veh.push({ fecha: new Date().toISOString(), texto });
+  input.value = '';
+  debounceSave('vehiculo', currentVehiculoId);
+  openVehiculo(currentVehiculoId);
+}
+
+// =========================================================
+// AI CHAT PANEL
+// =========================================================
+function renderFichaVehiculoRight(v, c) {
+  const el = document.getElementById('fv-right');
+  if (!chatHistory[v.id]) chatHistory[v.id] = [];
+
+  el.innerHTML = `
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-ai-dot"></div>
+      <div class="chat-header-title">Asistente IA</div>
+    </div>
+    <div class="chat-messages" id="chat-messages-${v.id}">
+      <div class="msg msg-system">Chat activo para <strong>${esc(v.marca||'')} ${esc(v.modelo||'')}</strong> · Fase ${v.fase_actual||0}</div>
+      ${chatHistory[v.id].map(m => `
+        <div class="msg ${m.role === 'user' ? 'msg-user' : 'msg-ai'}">
+          <pre>${esc(m.content)}</pre>
+        </div>`).join('')}
+    </div>
+    <div class="chat-toolbar">
+      <button class="btn-analizar" onclick="showAnalizarModal()">📄 Analizar documento (pegar texto)</button>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input-${v.id}" placeholder="Pregunta sobre el vehículo, documentos, trámites..." onkeydown="chatKeyDown(event,'${v.id}')"></textarea>
+      <button class="btn-send" id="chat-send-${v.id}" onclick="sendChat('${v.id}')">➤</button>
+    </div>
+  </div>`;
+  scrollChat(v.id);
+}
+
+function chatKeyDown(e, vid) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(vid); }
+}
+
+function scrollChat(vid) {
+  const el = document.getElementById(`chat-messages-${vid}`);
+  if (el) setTimeout(() => { el.scrollTop = el.scrollHeight; }, 50);
+}
+
+function buildChatContext(v, c) {
+  const tareasCompletadas = Object.entries(v.tareas || {}).filter(([,done]) => done).map(([id]) => id);
+  const tareasPendientes = FASES.flatMap(f => f.tareas.filter(t => !(v.tareas||{})[t.id]).map(t => t.label));
+  return `=== CONTEXTO DEL VEHÍCULO ===
+Vehículo: ${v.marca||'?'} ${v.modelo||'?'} ${v.anyo||'?'}
+Km: ${v.km||'?'} | Combustible: ${v.combustible||'?'} | CV: ${v.potencia_cv||'?'} | CO2: ${v.co2||'?'} g/km
+Precio Alemania: ${v.precio_alemania ? '€'+v.precio_alemania : '?'}
+Concesionario: ${v.concesionario||'?'}
+COC: ${v.tiene_coc?'Sí':'No'} | Scheckheft: ${v.tiene_scheckheft?'Sí':'No'} | Ventanas originales: ${v.ventanas_originales!==false?'Sí':'No'}
+Modalidad transporte: ${v.modalidad_transporte||'?'}
+Fase actual: ${v.fase_actual||0}
+Tareas pendientes en fase actual: ${tareasPendientes.slice(0,10).join(', ')||'ninguna'}
+
+=== CLIENTE ===
+Cliente: ${c?.nombre||'?'} | ${c?.localidad||'?'}
+Pipeline: ${c?.estado_pipeline||'?'}
+Busca: ${c?.busca?.tipo_vehiculo||'?'}, presupuesto ${c?.busca?.presupuesto_total ? '€'+c.busca.presupuesto_total : '?'}`;
+}
+
+async function sendChat(vid) {
+  const v = vehiculos[vid];
+  const c = clientes[v?.cliente_id];
+  const inputEl = document.getElementById(`chat-input-${vid}`);
+  const msg = inputEl.value.trim();
+  if (!msg || !v) return;
+
+  const aiKey = localStorage.getItem('ai_key');
+  if (!aiKey) { toast('Configura la Anthropic API Key primero', 'error'); return; }
+
+  inputEl.value = '';
+  document.getElementById(`chat-send-${vid}`).disabled = true;
+
+  chatHistory[vid].push({ role: 'user', content: msg });
+  appendChatMsg(vid, 'user', msg);
+
+  // Thinking indicator
+  const thinkId = 'think_' + Date.now();
+  const messagesEl = document.getElementById(`chat-messages-${vid}`);
+  const thinkEl = document.createElement('div');
+  thinkEl.id = thinkId;
+  thinkEl.className = 'msg msg-ai chat-thinking';
+  thinkEl.innerHTML = '<span class="loading-dots">Pensando</span>';
+  messagesEl.appendChild(thinkEl);
+  scrollChat(vid);
+
+  try {
+    const sysPrompt = `Eres el asistente de gestión de importación de MendiVan. Tienes acceso a la ficha completa de este vehículo y cliente. Tu función es: analizar documentos que te peguen (CarVertical, informe TÜV, ZB I, ZB II, COC, facturas alemanas), extraer datos relevantes y sugerir actualizar la ficha; alertar si detectas algo importante antes de pasar a la siguiente fase; responder preguntas técnicas sobre importación, IEDMT, REBU, homologación. Hablas en español, tuteo, directo y sin relleno. Cuando analices un documento termina siempre indicando qué tareas del checklist se pueden marcar como hechas.
+
+${buildChatContext(v, c)}`;
+
+    const messages = chatHistory[vid].map(m => ({ role: m.role, content: m.content }));
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 1500,
+        system: sysPrompt,
+        messages,
+      }),
+    });
+
+    thinkEl.remove();
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '(sin respuesta)';
+    chatHistory[vid].push({ role: 'assistant', content: reply });
+    appendChatMsg(vid, 'ai', reply);
+  } catch(e) {
+    document.getElementById(thinkId)?.remove();
+    appendChatMsg(vid, 'system', `Error: ${e.message}`);
+    console.error(e);
+  }
+
+  document.getElementById(`chat-send-${vid}`).disabled = false;
+}
+
+function appendChatMsg(vid, role, content) {
+  const el = document.getElementById(`chat-messages-${vid}`);
+  if (!el) return;
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  div.innerHTML = `<pre>${esc(content)}</pre>`;
+  el.appendChild(div);
+  scrollChat(vid);
+}
+
+// =========================================================
+// ANALIZAR DOCUMENTO MODAL
+// =========================================================
+function showAnalizarModal() {
+  const vid = currentVehiculoId;
+  openModal(`
+    <div class="modal-title">📄 Analizar documento</div>
+    <div class="form-group">
+      <label class="form-label">Pega aquí el texto del documento (CarVertical, TÜV, ZB I, ZB II, COC, factura…)</label>
+      <textarea class="form-control" id="analizar-texto" placeholder="Pega el texto aquí..." style="min-height:180px"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarAnalisis('${vid}')">Analizar con IA</button>
+    </div>
+  `);
+}
+
+function enviarAnalisis(vid) {
+  const texto = document.getElementById('analizar-texto').value.trim();
+  if (!texto) { toast('Pega un texto primero', 'error'); return; }
+  closeModal();
+  const inputEl = document.getElementById(`chat-input-${vid}`);
+  if (inputEl) {
+    inputEl.value = `Analiza este documento y extrae todos los datos relevantes del vehículo:\n\n${texto}`;
+    sendChat(vid);
+  }
+}
+
+// =========================================================
+// NUEVO CLIENTE MODAL
+// =========================================================
+function showNuevoClienteModal() {
+  openModal(`
+    <div class="modal-title">👤 Nuevo cliente</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-control" id="nc-nombre" placeholder="Juan García">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Teléfono</label>
+        <input type="tel" class="form-control" id="nc-telefono" placeholder="+34 600 000 000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" id="nc-email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Localidad</label>
+        <input type="text" class="form-control" id="nc-localidad">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Canal de entrada</label>
+        <select class="form-control" id="nc-canal">
+          ${CANALES.map(c => `<option>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado pipeline</label>
+        <select class="form-control" id="nc-pipeline">
+          ${PIPELINE_ESTADOS.map(s => `<option value="${s}">${PIPELINE_LABELS[s]}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearCliente()">Crear cliente</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('nc-nombre')?.focus(), 100);
+}
+
+async function crearCliente() {
+  const nombre = document.getElementById('nc-nombre').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio', 'error'); return; }
+  const id = genId();
+  const now = new Date().toISOString();
+  clientes[id] = {
+    id, nombre,
+    telefono: document.getElementById('nc-telefono').value,
+    email: document.getElementById('nc-email').value,
+    localidad: document.getElementById('nc-localidad').value,
+    canal_entrada: document.getElementById('nc-canal').value,
+    estado_pipeline: document.getElementById('nc-pipeline').value,
+    fecha_primer_contacto: now,
+    fecha_ultima_interaccion: now,
+    notas: [], vehiculos: [], busca: {},
+  };
+  closeModal();
+  await saveCliente(id);
+  renderClientesList();
+  openCliente(id);
+  toast('Cliente creado', 'success');
+}
+
+// =========================================================
+// NUEVO VEHICULO MODAL
+// =========================================================
+function showNuevoVehiculoModal() {
+  openModal(`
+    <div class="modal-title">🚗 Añadir vehículo</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Marca *</label>
+        <input type="text" class="form-control" id="nv-marca" placeholder="Volkswagen">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modelo *</label>
+        <input type="text" class="form-control" id="nv-modelo" placeholder="Transporter">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Año</label>
+        <input type="number" class="form-control" id="nv-anyo" placeholder="2020">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kilómetros</label>
+        <input type="number" class="form-control" id="nv-km" placeholder="80000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio Alemania (€)</label>
+        <input type="number" class="form-control" id="nv-precio">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Combustible</label>
+        <select class="form-control" id="nv-combustible">
+          ${COMBUSTIBLES.map(c => `<option>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Carrocería</label>
+        <select class="form-control" id="nv-carroceria">
+          ${CARROCERIAS.map(c => `<option>${c}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    ${fld('nv-link','Link mobile.de','','url','','','')}
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearVehiculo()">Añadir vehículo</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('nv-marca')?.focus(), 100);
+}
+
+async function crearVehiculo() {
+  const marca = document.getElementById('nv-marca').value.trim();
+  const modelo = document.getElementById('nv-modelo').value.trim();
+  if (!marca || !modelo) { toast('Marca y modelo son obligatorios', 'error'); return; }
+  const id = genId();
+  const now = new Date().toISOString();
+  vehiculos[id] = {
+    id, cliente_id: currentClienteId,
+    marca, modelo,
+    anyo: parseInt(document.getElementById('nv-anyo').value)||null,
+    km: parseInt(document.getElementById('nv-km').value)||null,
+    precio_alemania: parseFloat(document.getElementById('nv-precio').value)||null,
+    combustible: document.getElementById('nv-combustible').value,
+    tipo_carroceria: document.getElementById('nv-carroceria').value,
+    link_mobile: document.getElementById('nv-link')?.value || '',
+    estado: 'activo', fase_actual: 0, tareas: {},
+    tiene_coc: false, tiene_scheckheft: false, ventanas_originales: true,
+    modalidad_transporte: 'camion',
+    notas_veh: [], documentos: [],
+    fecha_ultima_actualizacion: now,
+  };
+  // Add vehicle ref to client
+  if (!clientes[currentClienteId].vehiculos) clientes[currentClienteId].vehiculos = [];
+  clientes[currentClienteId].vehiculos.push(id);
+
+  closeModal();
+  await Promise.all([saveVehiculo(id), saveCliente(currentClienteId)]);
+  renderClienteVehiculos();
+  openVehiculo(id);
+  toast('Vehículo añadido', 'success');
+}
+
+// =========================================================
+// EDITAR CLIENTE MODAL
+// =========================================================
+function editarCliente() {
+  const c = clientes[currentClienteId];
+  if (!c) return;
+  openModal(`
+    <div class="modal-title">✏️ Editar cliente</div>
+    <div class="form-row">
+      ${inputField('e-nombre','Nombre',c.nombre,'text')}
+      ${inputField('e-telefono','Teléfono',c.telefono,'tel')}
+    </div>
+    <div class="form-row">
+      ${inputField('e-email','Email',c.email,'email')}
+      ${inputField('e-localidad','Localidad',c.localidad,'text')}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estado pipeline</label>
+      <select class="form-control" id="e-pipeline">
+        ${PIPELINE_ESTADOS.map(s => `<option value="${s}" ${c.estado_pipeline===s?'selected':''}>${PIPELINE_LABELS[s]}</option>`).join('')}
+      </select>
+    </div>
+    ${inputField('e-proxima','Próxima acción',c.proxima_accion,'text')}
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicionCliente()">Guardar</button>
+    </div>
+  `);
+}
+
+function inputField(id, label, value, type) {
+  return `<div class="form-group">
+    <label class="form-label">${label}</label>
+    <input type="${type}" class="form-control" id="${id}" value="${esc(value||'')}">
+  </div>`;
+}
+
+async function guardarEdicionCliente() {
+  const c = clientes[currentClienteId];
+  if (!c) return;
+  c.nombre = document.getElementById('e-nombre').value.trim();
+  c.telefono = document.getElementById('e-telefono').value;
+  c.email = document.getElementById('e-email').value;
+  c.localidad = document.getElementById('e-localidad').value;
+  c.estado_pipeline = document.getElementById('e-pipeline').value;
+  c.proxima_accion = document.getElementById('e-proxima').value;
+  closeModal();
+  await saveCliente(currentClienteId);
+  document.getElementById('fc-nombre').textContent = c.nombre;
+  document.getElementById('fc-pipeline-badge').innerHTML = pipelineBadge(c.estado_pipeline);
+  renderClientesList();
+  toast('Cliente actualizado', 'success');
+}
+
+// =========================================================
+// ELIMINAR
+// =========================================================
+async function eliminarCliente() {
+  if (!confirm(`¿Eliminar al cliente "${clientes[currentClienteId]?.nombre}"? Se eliminarán también sus vehículos.`)) return;
+  const c = clientes[currentClienteId];
+  // Delete vehicles
+  const vIds = Object.values(vehiculos).filter(v => v.cliente_id === currentClienteId).map(v => v.id);
+  for (const vid of vIds) {
+    delete vehiculos[vid];
+    localStorage.removeItem('vehiculo_' + vid);
+    try {
+      const path = `data/vehiculos/${vid}.json`;
+      const ex = await ghGet(path);
+      if (ex) await ghDelete(path, ex.sha);
+    } catch(e) {}
+  }
+  delete clientes[currentClienteId];
+  localStorage.removeItem('cliente_' + currentClienteId);
+  try {
+    const path = `data/clientes/${currentClienteId}.json`;
+    const ex = await ghGet(path);
+    if (ex) await ghDelete(path, ex.sha);
+  } catch(e) {}
+  showView('crm');
+  renderClientesList();
+  toast('Cliente eliminado', 'success');
+}
+
+async function eliminarVehiculo() {
+  const v = vehiculos[currentVehiculoId];
+  if (!confirm(`¿Eliminar el vehículo "${v?.marca} ${v?.modelo}"?`)) return;
+  const cid = v.cliente_id;
+  delete vehiculos[currentVehiculoId];
+  localStorage.removeItem('vehiculo_' + currentVehiculoId);
+  try {
+    const path = `data/vehiculos/${currentVehiculoId}.json`;
+    const ex = await ghGet(path);
+    if (ex) await ghDelete(path, ex.sha);
+  } catch(e) {}
+  if (clientes[cid]) {
+    clientes[cid].vehiculos = (clientes[cid].vehiculos || []).filter(id => id !== currentVehiculoId);
+    await saveCliente(cid);
+  }
+  openCliente(cid);
+  switchClienteTab('vehiculos');
+  toast('Vehículo eliminado', 'success');
+}
+
+// =========================================================
+// CONFIG MODAL
+// =========================================================
+function showConfig() {
+  openModal(`
+    <div class="modal-title">⚙️ Configuración</div>
+    <div class="config-section">
+      <h3>GitHub</h3>
+      <div class="form-group">
+        <label class="form-label">Personal Access Token</label>
+        <input type="password" class="form-control" id="cfg-gh-token" value="${localStorage.getItem('gh_token')||''}">
+      </div>
+    </div>
+    <div class="config-section">
+      <h3>Anthropic IA</h3>
+      <div class="form-group">
+        <label class="form-label">API Key</label>
+        <input type="password" class="form-control" id="cfg-ai-key" value="${localStorage.getItem('ai_key')||''}">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarConfig()">Guardar</button>
+    </div>
+  `);
+}
+
+function guardarConfig() {
+  const token = document.getElementById('cfg-gh-token').value.trim();
+  const aiKey = document.getElementById('cfg-ai-key').value.trim();
+  if (token) localStorage.setItem('gh_token', token);
+  if (aiKey) localStorage.setItem('ai_key', aiKey);
+  closeModal();
+  toast('Configuración guardada', 'success');
+}
+
+// =========================================================
+// MODAL HELPERS
+// =========================================================
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+// =========================================================
+// ESCAPE HTML
+// =========================================================
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// =========================================================
+// KEYBOARD
+// =========================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// =========================================================
+// START
+// =========================================================
+init();
+</script>
+</body>
+</html>
