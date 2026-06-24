@@ -2384,13 +2384,24 @@ function invStep1HTML() {
     </div>
     <div class="form-group">
       <label class="form-label">Pega aquí el texto completo del anuncio *</label>
-      <textarea class="form-control" id="inv-texto" rows="8" placeholder="Copia el texto del anuncio de mobile.de y pégalo aquí...&#10;&#10;Incluye: título, ficha técnica, descripción, precio..."></textarea>
+      <textarea class="form-control" id="inv-texto" rows="7" placeholder="Copia el texto del anuncio de mobile.de y pégalo aquí...&#10;&#10;Incluye: título, ficha técnica, descripción, precio..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">URLs de fotos (opcional)</label>
+      <textarea class="form-control" id="inv-fotos-manual" rows="3" placeholder="https://...&#10;https://..."></textarea>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:5px">En mobile.de: abre cada foto a tamaño completo, click derecho → Copiar dirección de imagen, y pega aquí todas las URLs (una por línea).</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-ghost" onclick="invGotoStep2({url_mobile:document.getElementById('inv-url').value})">Saltar →</button>
+      <button class="btn btn-ghost" onclick="invGotoStep2({url_mobile:document.getElementById('inv-url').value,fotos:invMergeFotos([],document.getElementById('inv-fotos-manual').value)})">Saltar →</button>
       <button class="btn btn-primary" onclick="invExtractWithAI()">🔍 Extraer con IA</button>
     </div>`;
+}
+
+function invMergeFotos(aiFotos, manualRaw) {
+  const manual = (manualRaw || '').split('\n').map(f => f.trim()).filter(f => f.startsWith('http'));
+  const ai = Array.isArray(aiFotos) ? aiFotos.filter(f => f && f.startsWith('http')) : [];
+  return [...new Set([...ai, ...manual])];
 }
 
 async function invExtractWithAI() {
@@ -2400,6 +2411,7 @@ async function invExtractWithAI() {
   if (!aiKey) { toast('Configura la Anthropic API Key primero', 'error'); return; }
 
   const url = document.getElementById('inv-url')?.value || '';
+  const fotosManual = document.getElementById('inv-fotos-manual')?.value || '';
   document.getElementById('inv-modal-body').innerHTML = `
     <div style="text-align:center;padding:48px 20px;color:var(--gray-500)">
       <span class="loading-dots" style="font-size:15px">Extrayendo datos con IA</span>
@@ -2416,8 +2428,8 @@ async function invExtractWithAI() {
       },
       body: JSON.stringify({
         model: AI_MODEL,
-        max_tokens: 800,
-        system: 'Eres un asistente especializado en análisis de anuncios de vehículos. El usuario te va a proporcionar una URL de mobile.de. Dado que no puedes acceder a URLs, analiza el texto que te proporcionen del anuncio y extrae los datos en formato JSON con exactamente estos campos: marca, modelo, anio, km, combustible, cambio, potencia_cv, color, precio_alemania, descripcion_original. Si no encuentras un dato, ponlo como null. Responde ÚNICAMENTE con el JSON, sin explicaciones ni markdown.',
+        max_tokens: 1000,
+        system: 'Eres un asistente especializado en análisis de anuncios de vehículos. Analiza el texto del anuncio y extrae los datos en formato JSON con exactamente estos campos: marca, modelo, anio, km, combustible, cambio, potencia_cv, color, precio_alemania, descripcion_original, fotos. El campo "fotos" debe ser un array con todas las URLs de imágenes que encuentres en el texto (busca patrones como https://...jpg, https://...jpeg, https://...png, https://...webp). Si el texto no contiene URLs de imágenes, devuelve fotos como array vacío []. Si no encuentras un dato de ficha técnica, ponlo como null. Responde ÚNICAMENTE con el JSON, sin explicaciones ni markdown.',
         messages: [{ role: 'user', content: `Extrae los datos de este anuncio:\n\n${texto}` }],
       }),
     });
@@ -2426,7 +2438,8 @@ async function invExtractWithAI() {
     const raw = data.content?.[0]?.text || '{}';
     let parsed = {};
     try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {}; } catch(e) {}
-    invGotoStep2({ ...parsed, url_mobile: url });
+    const fotosFinales = invMergeFotos(parsed.fotos, fotosManual);
+    invGotoStep2({ ...parsed, fotos: fotosFinales, url_mobile: url });
   } catch(e) {
     document.getElementById('inv-modal-body').innerHTML = invStep1HTML();
     document.getElementById('inv-url').value = url;
@@ -2497,7 +2510,7 @@ function invGotoStep2(d) {
     </div>
     <div class="form-group">
       <label class="form-label">Fotos (URLs, una por línea)</label>
-      <textarea class="form-control" id="i2-fotos" rows="3" placeholder="https://..."></textarea>
+      <textarea class="form-control" id="i2-fotos" rows="3" placeholder="https://...">${esc((d.fotos||[]).join('\n'))}</textarea>
     </div>
     <div class="form-group">
       <label class="form-label">Notas internas</label>
