@@ -2666,6 +2666,7 @@ async function copiarHTMLExport() {
 // WORDPRESS SYNC
 // =========================================================
 const WP_BASE = 'https://mendivan.com/wp-json/wp/v2';
+const WP_CPT = 'vehiculo';
 const WP_AUTH = 'Basic ' + btoa('kixyowsn:SJmz TlbV uvXA VeHP rjwf kMVK');
 
 function wpBadge(item) {
@@ -2704,8 +2705,8 @@ async function syncToWordPress(id, source) {
 
   const isUpdate = !!item.wp_post_id;
   const endpoint = isUpdate
-    ? `${WP_BASE}/vehiculos/${item.wp_post_id}`
-    : `${WP_BASE}/vehiculos`;
+    ? `${WP_BASE}/${WP_CPT}/${item.wp_post_id}`
+    : `${WP_BASE}/${WP_CPT}`;
   const method = isUpdate ? 'PUT' : 'POST';
 
   setSaveIndicator('saving', 'Sincronizando...');
