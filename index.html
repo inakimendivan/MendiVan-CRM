@@ -664,7 +664,8 @@
         <div style="margin-top:6px;display:flex;gap:8px;align-items:center" id="fv-badges"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-ghost btn-sm" onclick="eliminarVehiculo()">🗑 Eliminar</button>
+        <button class="btn btn-ghost btn-sm" onclick="syncToWordPress(currentVehiculoId,'vehiculo')">🔄 Sincronizar con WordPress</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarVehiculo()">🗑 Eliminar</button>
       </div>
     </div>
     <div id="fv-alertas" class="alertas-panel"></div>
@@ -1641,10 +1642,6 @@ function renderFichaVehiculoRight(v, c) {
   if (!chatHistory[v.id]) chatHistory[v.id] = [];
 
   el.innerHTML = `
-  <div class="card" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-    <span style="font-size:13px;color:var(--gray-500)">${v.wp_post_id ? `✅ <a href="https://mendivan.com/?p=${esc(v.wp_post_id)}" target="_blank" class="link-ext" style="font-size:13px">Publicado en web</a>` : '⚠️ No publicado en web'}</span>
-    <button class="btn btn-ghost btn-sm" onclick="syncToWordPress('${v.id}','vehiculo')">🔄 Sincronizar con WordPress</button>
-  </div>
   <div class="chat-panel">
     <div class="chat-header">
       <div class="chat-ai-dot"></div>
