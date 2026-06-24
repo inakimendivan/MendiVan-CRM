@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Importación — MendiVan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --verde: #195d6a;
+      --verde-md: #539c88;
+      --crema: #f0f4ed;
+      --naranja: #feab70;
+      --terra: #9f4128;
+      --white: #ffffff;
+      --g100: #f6f8f6;
+      --g200: #e8eee8;
+      --g300: #d0d9d0;
+      --g500: #8a9a8a;
+      --g700: #3a4a3a;
+      --g900: #1a2a1a;
+      --shadow: 0 2px 12px rgba(25,93,106,.08);
+      --shadow-md: 0 6px 24px rgba(25,93,106,.14);
+      --r: 10px;
+      --r-sm: 6px;
+      --tr: all .18s ease;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--crema);
+      color: var(--g900);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    /* ── HEADER ── */
+    .app-header {
+      background: var(--verde);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0,0,0,.18);
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: var(--verde-md);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .logo-text h1 { font-size: 17px; font-weight: 600; letter-spacing: -.3px; }
+    .logo-text p { font-size: 11px; opacity: .7; font-weight: 400; }
+    .btn-cfg {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+      transition: var(--tr);
+    }
+    .btn-cfg:hover { background: rgba(255,255,255,.22); }
+
+    /* ── LAYOUT — single column ── */
+    .app-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    /* .main-col and .side-col no longer used — layout is a single flex column */
+
+    /* ── CARDS ── */
+    .card { background: #fff; border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
+    .card-hd {
+      background: var(--verde);
+      color: #fff;
+      padding: 13px 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .badge {
+      width: 26px; height: 26px;
+      background: rgba(255,255,255,.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; flex-shrink: 0;
+    }
+    .card-hd h2 { font-size: 14px; font-weight: 600; letter-spacing: .15px; }
+    .card-bd { padding: 20px; }
+
+    /* ── FORMS ── */
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    label.lbl {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      color: var(--g500);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin-bottom: 5px;
+    }
+    .req::after { content: ' *'; color: var(--terra); }
+    input[type=text], input[type=number], input[type=url], input[type=password], select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid var(--g200);
+      border-radius: var(--r-sm);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; color: var(--g900);
+      background: var(--g100);
+      outline: none; transition: var(--tr);
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--verde-md);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(83,156,136,.12);
+    }
+    input::placeholder { color: var(--g300); }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    @media(max-width:560px){ .grid2,.grid3 { grid-template-columns: 1fr; } }
+    .full { grid-column: 1/-1; }
+
+    /* ── OPTION CARDS ── */
+    .opt-cards { display: flex; flex-direction: column; gap: 7px; }
+    .opt-card {
+      border: 2px solid var(--g200);
+      border-radius: var(--r-sm);
+      padding: 11px 14px;
+      cursor: pointer; transition: var(--tr);
+      display: flex; align-items: flex-start; gap: 11px;
+      background: var(--g100);
+      user-select: none;
+    }
+    .opt-card:hover { border-color: var(--verde-md); background: #fff; }
+    .opt-card.sel { border-color: var(--verde); background: rgba(25,93,106,.04); }
+    .radio-dot {
+      width: 17px; height: 17px;
+      border: 2px solid var(--g300);
+      border-radius: 50%; flex-shrink: 0;
+      margin-top: 3px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--tr);
+    }
+    .opt-card.sel .radio-dot { border-color: var(--verde); background: var(--verde); }
+    .opt-card.sel .radio-dot::after { content:''; width:6px; height:6px; background:#fff; border-radius:50%; }
+    .opt-title { font-size: 13px; font-weight: 600; color: var(--g900); margin-bottom: 1px; }
+    .opt-card.sel .opt-title { color: var(--verde); }
+    .opt-desc { font-size: 11px; color: var(--g500); line-height: 1.4; }
+
+    /* ── BUYER TABS ── */
+    .tabs { display: flex; gap: 8px; }
+    .tab {
+      flex: 1; padding: 9px 8px; text-align: center;
+      border: 2px solid var(--g200); border-radius: var(--r-sm);
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--g700); background: var(--g100);
+      transition: var(--tr); user-select: none;
+    }
+    .tab:hover { border-color: var(--verde-md); background: #fff; }
+    .tab.sel { border-color: var(--verde); background: var(--verde); color: #fff; }
+
+    /* ── NOTES ── */
+    .note-dyn {
+      background: linear-gradient(135deg,rgba(83,156,136,.1),rgba(25,93,106,.04));
+      border-left: 3px solid var(--verde-md);
+      border-radius: var(--r-sm); padding: 11px 14px;
+      font-size: 12px; color: var(--g700); margin-top: 12px; display: none;
+    }
+    .note-dyn strong { display: block; color: var(--verde); font-size: 13px; margin-bottom: 3px; }
+    .note-warn {
+      background: rgba(159,65,40,.06); border-left: 3px solid var(--terra);
+      border-radius: var(--r-sm); padding: 9px 13px;
+      font-size: 11px; color: var(--terra); margin-top: 10px;
+    }
+    .note-info {
+      background: rgba(254,171,112,.1); border-left: 3px solid var(--naranja);
+      border-radius: var(--r-sm); padding: 9px 13px;
+      font-size: 11px; color: var(--g700); margin-top: 10px;
+    }
+    .note-green {
+      background: rgba(83,156,136,.08); border-left: 3px solid var(--verde-md);
+      border-radius: var(--r-sm); padding: 9px 13px;
+      font-size: 11px; color: var(--g700); margin-top: 10px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: var(--r-sm);
+      border: none; cursor: pointer;
+      font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 500;
+      transition: var(--tr); white-space: nowrap;
+    }
+    .btn-primary { background: var(--verde); color: #fff; }
+    .btn-primary:hover { background: #144f5a; }
+    .btn-primary:disabled { background: var(--g300); cursor: not-allowed; color: var(--g500); }
+    .btn-sec { background: var(--g200); color: var(--g700); }
+    .btn-sec:hover { background: var(--g300); }
+    .btn-orange { background: var(--naranja); color: #fff; }
+    .btn-orange:hover { background: #fd9a55; }
+    .btn-full { width: 100%; justify-content: center; }
+    .btn-sm { padding: 7px 13px; font-size: 12px; }
+
+    /* ── IMPORT ROW ── */
+    .import-row { display: flex; gap: 8px; align-items: flex-end; }
+    .import-row input { flex: 1; }
+    #importStatus { font-size: 11px; color: var(--verde-md); margin-top: 6px; display: none; }
+
+    /* ── SERVICE CARDS ── */
+    .svc-cards { display: flex; flex-direction: column; gap: 8px; }
+    .svc-card {
+      border: 2px solid var(--g200); border-radius: var(--r-sm);
+      padding: 13px 16px; cursor: pointer; transition: var(--tr);
+      background: var(--g100); display: flex; align-items: center; gap: 12px;
+      user-select: none;
+    }
+    .svc-card:hover { border-color: var(--verde-md); background: #fff; }
+    .svc-card.sel { border-color: var(--verde); background: rgba(25,93,106,.04); }
+    .svc-icon { font-size: 22px; flex-shrink: 0; }
+    .svc-body { flex: 1; }
+    .svc-name { font-size: 13px; font-weight: 600; color: var(--g900); }
+    .svc-card.sel .svc-name { color: var(--verde); }
+    .svc-descr { font-size: 11px; color: var(--g500); margin-top: 1px; line-height: 1.4; }
+    .svc-price { font-size: 16px; font-weight: 600; color: var(--verde); flex-shrink: 0; }
+    .svc-price-input {
+      width: 90px !important;
+      text-align: right !important;
+      font-size: 15px !important;
+      font-weight: 600 !important;
+      color: var(--verde) !important;
+      padding: 5px 7px !important;
+      flex-shrink: 0;
+      cursor: text;
+      background: rgba(255,255,255,.55) !important;
+    }
+    .svc-card.sel .svc-price-input {
+      background: rgba(255,255,255,.85) !important;
+      border-color: var(--verde) !important;
+    }
+    .camion-input { display: none; margin-top: 12px; align-items: center; gap: 8px; }
+    .camion-input.show { display: flex; }
+    .camion-input label { font-size: 12px; font-weight: 500; color: var(--g700); white-space: nowrap; }
+    .camion-input input { width: 130px; }
+
+    /* ── COSTS PANEL ── */
+    .costs-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-size: 13px; font-weight: 500; color: var(--g700);
+    }
+    .costs-toggle input { width: 15px; height: 15px; accent-color: var(--verde); cursor: pointer; }
+    .costs-panel { display: none; margin-top: 14px; }
+    .costs-panel.open { display: block; }
+    .cost-cols {
+      display: grid; grid-template-columns: 1fr 22px 90px 90px;
+      gap: 8px; align-items: center;
+      padding: 5px 0; border-bottom: 1px solid var(--g100);
+    }
+    .cost-cols:last-child { border-bottom: none; }
+    .cost-hdr {
+      display: grid; grid-template-columns: 1fr 22px 90px 90px;
+      gap: 8px; align-items: center;
+      padding-bottom: 6px; margin-bottom: 2px;
+      border-bottom: 2px solid var(--g200);
+    }
+    .cost-hdr span {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--g500); font-weight: 600;
+    }
+    .cost-hdr span:nth-child(3),
+    .cost-hdr span:nth-child(4) { text-align: center; }
+    .cost-lbl { font-size: 12px; font-weight: 500; color: var(--g700); }
+    .cost-lbl small { display: block; font-size: 10px; color: var(--g500); font-weight: 400; }
+    .cost-cols input[type=number] { padding: 6px 7px; font-size: 12px; text-align: center; }
+    .cost-fixed {
+      display: grid; grid-template-columns: 1fr 22px auto;
+      gap: 8px; align-items: center;
+      padding: 5px 0; border-bottom: 1px solid var(--g100);
+    }
+    .cost-fixed-val { font-size: 13px; font-weight: 600; color: var(--verde); text-align: right; }
+    .cost-toggle-cb { width: 15px; height: 15px; accent-color: var(--verde); cursor: pointer; }
+    .cost-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .travel-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .travel-row input { width: 15px; height: 15px; accent-color: var(--verde); cursor: pointer; }
+    .travel-row label { font-size: 12px; color: var(--g700); cursor: pointer; }
+    /* Section header inside editable costs panel */
+    .cost-sec {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--verde);
+      padding: 14px 0 6px; margin-top: 4px;
+      border-bottom: 2px solid rgba(25,93,106,.12);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .costs-panel > .cost-sec:first-child { padding-top: 10px; margin-top: 0; }
+
+    /* ── RESULTS ── */
+    .result-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    @media(max-width:480px){ .result-3 { grid-template-columns: 1fr; } }
+    .res-card {
+      border-radius: var(--r-sm); padding: 14px 12px; text-align: center;
+    }
+    .res-card.rmin { background: rgba(83,156,136,.1); border: 2px solid var(--verde-md); }
+    .res-card.rapprox {
+      background: var(--verde); border: 2px solid var(--verde);
+      color: #fff; transform: scale(1.03); box-shadow: var(--shadow-md);
+    }
+    .res-card.rmax { background: rgba(254,171,112,.15); border: 2px solid var(--naranja); }
+    .res-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; opacity: .7; margin-bottom: 3px; }
+    .res-amt { font-size: 19px; font-weight: 600; letter-spacing: -.4px; }
+    .res-note { font-size: 10px; opacity: .6; margin-top: 3px; }
+    .rapprox .res-lbl, .rapprox .res-note { opacity: .8; }
+    .rapprox .res-note { opacity: .65; }
+
+    /* ── BREAKDOWN ── */
+    .breakdown { margin-bottom: 16px; }
+    .breakdown-toggle {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; font-weight: 600; color: var(--verde);
+      cursor: pointer; padding: 8px 0;
+      border-top: 1px solid var(--g200);
+    }
+    .breakdown-toggle .arrow { transition: var(--tr); }
+    .breakdown-toggle.open .arrow { transform: rotate(180deg); }
+    .breakdown-body { display: none; }
+    .breakdown-body.open { display: block; }
+    .bk-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .bk-table th {
+      text-align: left; padding: 6px 8px;
+      background: var(--g100); color: var(--g500);
+      font-size: 10px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600;
+    }
+    .bk-table th:not(:first-child) { text-align: right; }
+    .bk-table td { padding: 6px 8px; border-bottom: 1px solid var(--g100); color: var(--g700); }
+    .bk-table td:not(:first-child) { text-align: right; white-space: nowrap; }
+    .bk-table .tr-total td {
+      font-weight: 600; color: var(--verde); font-size: 13px;
+      border-top: 2px solid var(--verde); border-bottom: none;
+    }
+    .bk-table .tr-tax td { background: rgba(25,93,106,.03); }
+    .bk-table .tr-iedmt td { color: var(--g500); font-style: italic; }
+    .bk-table .tr-group td {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+      font-weight: 700; color: var(--verde);
+      background: rgba(25,93,106,.06);
+      padding: 9px 8px 5px;
+      border-top: 2px solid rgba(25,93,106,.12);
+    }
+    .bk-table .tr-group:first-child td { border-top: none; }
+    .bk-table .tr-service td { font-weight: 600; }
+
+    /* ── IEDMT DETAIL ── */
+    .iedmt-box {
+      background: rgba(25,93,106,.04);
+      border: 1px solid rgba(25,93,106,.12);
+      border-radius: var(--r-sm); padding: 12px 14px;
+      margin-bottom: 14px; font-size: 12px; display: none;
+    }
+    .iedmt-box.show { display: block; }
+    .iedmt-box h4 { font-size: 12px; font-weight: 600; color: var(--verde); margin-bottom: 8px; }
+    .iedmt-row { display: flex; justify-content: space-between; padding: 3px 0; color: var(--g700); }
+    .iedmt-row.hl { font-weight: 600; color: var(--verde); border-top: 1px solid rgba(25,93,106,.1); margin-top: 4px; padding-top: 6px; }
+    .iedmt-row.saving { color: var(--verde-md); }
+
+    /* ── CONSIDERATIONS ── */
+    .consid-list { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+    .consid-list li {
+      font-size: 11px; color: var(--g700);
+      display: flex; align-items: flex-start; gap: 7px;
+      padding: 6px 10px; background: var(--g100); border-radius: 4px;
+      line-height: 1.4;
+    }
+    .consid-list li .ci { flex-shrink: 0; color: var(--verde-md); font-weight: 700; }
+    .consid-list li.ci-warn { background: rgba(159,65,40,.06); }
+    .consid-list li.ci-warn .ci { color: var(--terra); }
+    .consid-list li.ci-good { background: rgba(83,156,136,.08); }
+    .consid-list li.ci-good .ci { color: var(--verde-md); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 36px 16px; color: var(--g500); }
+    .empty-state .ei { font-size: 44px; margin-bottom: 12px; opacity: .4; }
+    .empty-state p { font-size: 13px; }
+
+    /* ── DISCLAIMER ── */
+    .disclaimer {
+      background: rgba(159,65,40,.07); border: 1px solid rgba(159,65,40,.2);
+      border-radius: var(--r-sm); padding: 12px 16px;
+      font-size: 11px; color: var(--terra); line-height: 1.5; text-align: center;
+    }
+
+    /* ── MODAL ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.48); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: var(--r);
+      padding: 28px; max-width: 440px; width: 92%;
+      box-shadow: var(--shadow-md);
+    }
+    .modal h3 { font-size: 16px; font-weight: 600; color: var(--verde); margin-bottom: 6px; }
+    .modal .modal-sub { font-size: 12px; color: var(--g500); margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ── PDF MODAL ── */
+    .pdf-modal .fg { margin-bottom: 14px; }
+    .photo-placeholder {
+      border: 2px dashed var(--g300);
+      border-radius: var(--r-sm);
+      padding: 18px 12px;
+      text-align: center;
+      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--g500); font-size: 13px;
+      transition: var(--tr);
+    }
+    .photo-placeholder:hover { border-color: var(--verde-md); color: var(--verde); background: var(--g100); }
+    .photo-placeholder span:first-child { font-size: 24px; }
+    .photo-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .photo-preview-wrap img {
+      max-width: 100%; max-height: 160px; object-fit: contain;
+      border-radius: var(--r-sm); border: 1px solid var(--g200);
+    }
+    .btn-photo-remove {
+      font-size: 12px; color: var(--terra); background: none; border: none;
+      cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 500;
+    }
+    .btn-photo-remove:hover { text-decoration: underline; }
+
+    /* ── SPINNER ── */
+    .spin {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SECTION LABEL ── */
+    .sec-lbl {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .7px; color: var(--g500); margin-bottom: 8px; margin-top: 16px;
+    }
+    .sec-lbl:first-child { margin-top: 0; }
+
+    /* ── MISC ── */
+    .hidden { display: none !important; }
+    .divider { height: 1px; background: var(--g200); margin: 16px 0; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .tag {
+      display: inline-block; padding: 2px 8px;
+      background: rgba(83,156,136,.15); color: var(--verde);
+      border-radius: 20px; font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .results-hd {
+      background: var(--verde); color: #fff;
+      padding: 13px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .results-hd h2 { font-size: 14px; font-weight: 600; }
+    .results-hd .tag-white {
+      background: rgba(255,255,255,.2);
+      color: #fff; border-radius: 20px; font-size: 10px; font-weight: 600;
+      padding: 3px 10px; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .client-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+    .client-row .fg { flex: 1; margin-bottom: 0; }
+    input[type=password] { letter-spacing: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ HEADER ══ -->
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-icon">🚐</div>
+    <div class="logo-text">
+      <h1>MendiVan</h1>
+      <p>Calculadora de Importación — Alemania → España</p>
+    </div>
+  </div>
+  <button class="btn-cfg" onclick="openConfig()">⚙ Configuración</button>
+</header>
+
+<!-- ══════════════════════════════════ CONFIG MODAL ══ -->
+<div class="overlay" id="configOverlay">
+  <div class="modal">
+    <h3>⚙ Configuración</h3>
+    <p class="modal-sub">La API key se guarda en tu navegador y nunca sale de aquí excepto para llamadas a la API de Anthropic.</p>
+    <div class="fg">
+      <label class="lbl">Anthropic API Key</label>
+      <input type="password" id="cfgApiKey" placeholder="sk-ant-…" autocomplete="off">
+    </div>
+    <div class="note-info" style="margin-top:0">
+      Necesaria solo para importar datos desde mobile.de. Sin API key puedes usar la calculadora introduciendo los datos manualmente.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="closeConfig()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ PDF MODAL ══ -->
+<div class="overlay" id="pdfOverlay">
+  <div class="modal pdf-modal">
+    <h3>📄 Exportar Presupuesto PDF</h3>
+    <p class="modal-sub">Se generará un PDF con el desglose completo de costes.</p>
+    <div class="fg">
+      <label class="lbl">Nombre del cliente</label>
+      <input type="text" id="pdfCliente" placeholder="Ej: Carlos García López">
+    </div>
+    <div class="fg">
+      <label class="lbl">Foto del vehículo (opcional)</label>
+      <input type="file" id="pdfFoto" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoSelect(event)">
+      <div id="photoPlaceholder" class="photo-placeholder" onclick="document.getElementById('pdfFoto').click()">
+        <span>📷</span>
+        <span>Seleccionar imagen (jpg, png, webp)</span>
+      </div>
+      <div id="photoPreviewWrap" class="photo-preview-wrap hidden">
+        <img id="photoPreviewImg" src="" alt="Preview del vehículo">
+        <button type="button" class="btn-photo-remove" onclick="removePhoto()">✕ Quitar foto</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="lbl">Referencia interna (opcional)</label>
+      <input type="text" id="pdfRef" placeholder="Ej: MV-2025-042">
+    </div>
+    <div class="fg">
+      <label class="lbl">Notas adicionales (opcional)</label>
+      <textarea id="pdfNotas" rows="3" placeholder="Observaciones para el cliente…" style="resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sec" onclick="closePdfModal()">Cancelar</button>
+      <button class="btn btn-orange" onclick="generatePDF()">📥 Generar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ MAIN ══ -->
+<div class="app-wrap">
+
+    <!-- ── MOD 1: TIPO OPERACIÓN ── -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="badge">1</div>
+        <h2>Tipo de Operación</h2>
+      </div>
+      <div class="card-bd">
+
+        <div class="sec-lbl">Vendedor en Alemania</div>
+        <div class="opt-cards" id="vendedorCards">
+          <div class="opt-card sel" data-v="rebu" onclick="setVendedor('rebu')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">Empresa REBU §25a</div>
+              <div class="opt-desc">Factura sin IVA desglosado. Sin ITP. Sin IVA deducible. Margen del dealer incluido en precio.</div>
+            </div>
+          </div>
+          <div class="opt-card" data-v="iva" onclick="setVendedor('iva')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">Empresa con IVA desglosado</div>
+              <div class="opt-desc">Factura con 19% MwSt. Sin ITP. Si comprador es empresa con ROI, el IVA es deducible en España.</div>
+            </div>
+          </div>
+          <div class="opt-card" data-v="particular" onclick="setVendedor('particular')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">Particular (Kaufvertrag)</div>
+              <div class="opt-desc">Sin factura, contrato privado. Aplica ITP en España según CCAA. Riesgo de valoración fiscal superior al precio pagado.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec-lbl" style="margin-top:18px">Comprador en España</div>
+        <div class="tabs" id="compradorTabs">
+          <div class="tab sel" data-c="particular" onclick="setComprador('particular')">👤 Particular</div>
+          <div class="tab" data-c="empresa" onclick="setComprador('empresa')">🏢 Empresa / Autónomo (ROI)</div>
+        </div>
+
+        <div class="note-dyn" id="dynamicNote"></div>
+
+        <!-- CCAA (only if particular) -->
+        <div id="ccaaBlock" class="hidden" style="margin-top:16px">
+          <div class="sec-lbl">Comunidad Autónoma de matriculación (para ITP)</div>
+          <div class="grid2">
+            <div class="fg">
+              <label class="lbl req">Comunidad Autónoma</label>
+              <select id="ccaaSelect" onchange="setCCAA()">
+                <option value="andalucia">Andalucía</option>
+                <option value="aragon">Aragón</option>
+                <option value="asturias">Asturias</option>
+                <option value="baleares">Baleares</option>
+                <option value="canarias">Canarias</option>
+                <option value="cantabria">Cantabria</option>
+                <option value="castilla-la-mancha">Castilla-La Mancha</option>
+                <option value="castilla-leon">Castilla y León</option>
+                <option value="cataluna">Cataluña</option>
+                <option value="extremadura">Extremadura</option>
+                <option value="galicia">Galicia</option>
+                <option value="la-rioja">La Rioja</option>
+                <option value="madrid" selected>Madrid</option>
+                <option value="murcia">Murcia</option>
+                <option value="navarra">Navarra</option>
+                <option value="pais-vasco">País Vasco</option>
+                <option value="valencia">Valencia</option>
+              </select>
+            </div>
+            <div class="fg" id="cvfBlock" style="display:none">
+              <label class="lbl">Caballos Fiscales (CVF) <span style="font-size:10px;text-transform:none;letter-spacing:0;color:var(--g500)">(Andalucía)</span></label>
+              <input type="number" id="cvfInput" placeholder="Ej: 12" min="1" max="50" oninput="recalculate()">
+            </div>
+          </div>
+          <div class="note-warn">
+            ⚠ El ITP es orientativo. Hacienda puede valorar el vehículo por encima del precio de compra. El ITP real podría ser mayor al calculado.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── MOD 2: DATOS DEL VEHÍCULO ── -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="badge">2</div>
+        <h2>Datos del Vehículo</h2>
+      </div>
+      <div class="card-bd">
+
+        <div class="sec-lbl">Importar desde mobile.de (opcional)</div>
+        <div class="import-row">
+          <input type="url" id="mobileURL" placeholder="https://www.mobile.de/auto/…">
+          <button class="btn btn-primary" id="importBtn" onclick="importFromMobileDE()">
+            <span id="importBtnText">⬇ Importar</span>
+          </button>
+        </div>
+        <div id="importStatus"></div>
+        <div class="note-info" style="margin-top:8px">
+          Claude intentará extraer los datos de la URL. Se requiere API key configurada. El resultado puede ser aproximado — verifica los campos tras la importación.
+        </div>
+
+        <div class="divider"></div>
+        <div class="sec-lbl">Datos del vehículo</div>
+
+        <div class="grid2">
+          <div class="fg">
+            <label class="lbl req">Marca</label>
+            <input type="text" id="marca" placeholder="Ej: Volkswagen" oninput="updateState()">
+          </div>
+          <div class="fg">
+            <label class="lbl req">Modelo</label>
+            <input type="text" id="modelo" placeholder="Ej: Crafter 2.0 TDI" oninput="updateState()">
+          </div>
+          <div class="fg">
+            <label class="lbl req">Año de matriculación</label>
+            <select id="anio" onchange="recalculate()"></select>
+          </div>
+          <div class="fg">
+            <label class="lbl">Mes de matriculación <span style="color:var(--g500);text-transform:none;letter-spacing:0;font-size:10px">(opcional)</span></label>
+            <select id="mes" onchange="recalculate()">
+              <option value="">— No especificado</option>
+              <option value="1">Enero</option><option value="2">Febrero</option>
+              <option value="3">Marzo</option><option value="4">Abril</option>
+              <option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option>
+              <option value="9">Septiembre</option><option value="10">Octubre</option>
+              <option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label class="lbl req">Emisiones CO₂ (g/km)</label>
+            <input type="number" id="co2" placeholder="Ej: 140" min="0" max="600" oninput="recalculate()">
+          </div>
+          <div class="fg">
+            <label class="lbl req">Precio de compra (€)</label>
+            <input type="number" id="precio" placeholder="Ej: 22500" min="0" oninput="onPrecioChange()">
+            <p id="precioNota" style="margin-top:5px;font-size:11px;color:var(--verde-md);line-height:1.4"></p>
+          </div>
+          <div class="fg full">
+            <label class="lbl">Valor fiscal BOE (€) <span style="color:var(--g500);font-size:10px;text-transform:none;letter-spacing:0">(base para cálculo IEDMT)</span></label>
+            <input type="number" id="valorFiscalBOE" placeholder="Ej: 22500 — se usa para calcular el IEDMT" min="0" oninput="recalculate()">
+            <p style="margin-top:6px;font-size:11px;color:#539c88;line-height:1.4">
+              Consulta el valor en las tablas oficiales de Hacienda y ajústalo aquí. Puedes modificarlo manualmente.
+              <a href="https://sede.agenciatributaria.gob.es/Sede/todas-gestiones/impuestos-tasas/impuesto-matriculacion/modelo-576-impue_____eterminados-medios-transporte-autoliquidacion_/instrucciones.html" target="_blank" rel="noopener" style="color:#539c88;text-decoration:underline">→ Ver tablas Hacienda</a>
+            </p>
+          </div>
+          <div class="fg">
+            <label class="lbl">Kilómetros <span style="color:var(--g500);font-size:10px;text-transform:none;letter-spacing:0">(opcional)</span></label>
+            <input type="number" id="kilometros" placeholder="Ej: 85000" min="0" oninput="updateState()">
+          </div>
+          <div class="fg">
+            <label class="lbl">Combustible <span style="color:var(--g500);font-size:10px;text-transform:none;letter-spacing:0">(opcional)</span></label>
+            <input type="text" id="combustible" placeholder="Ej: Diésel, Eléctrico…" oninput="updateState()">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="sec-lbl">Tipo de vehículo</div>
+        <div class="opt-cards" id="tipoCards">
+          <div class="opt-card sel" data-t="furgoneta" onclick="setTipo('furgoneta')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">🚐 Furgoneta / Turismo (sin camperizar)</div>
+              <div class="opt-desc">Sin bonificación IEDMT ni costes de homologación adicionales.</div>
+            </div>
+          </div>
+          <div class="opt-card" data-t="camper" onclick="setTipo('camper')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">🏕 Camper / Furgoneta camperizada (N1)</div>
+              <div class="opt-desc">Añade 1.500€ homologación unitaria individual. Requiere ITV especializada.</div>
+            </div>
+          </div>
+          <div class="opt-card" data-t="autocaravana" onclick="setTipo('autocaravana')">
+            <div class="radio-dot"></div>
+            <div>
+              <div class="opt-title">🚌 Autocaravana de fábrica (M1)</div>
+              <div class="opt-desc">Bonificación del 30% en IEDMT según RD 2822/1998. Categoría M1 homologada de fábrica.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="camperNote" class="note-warn hidden" style="margin-top:10px">
+          🏕 Vehículo camperizado aftermarket. Requiere homologación unitaria individual en España para su matriculación como vivienda. Coste orientativo: 1.500€.
+        </div>
+        <div id="autocaravanaNote" class="note-green hidden" style="margin-top:10px">
+          🚌 Las autocaravanas homologadas de fábrica disfrutan de una bonificación del 30% sobre el impuesto de matriculación (IEDMT) según el RD 2822/1998.
+        </div>
+
+        <div class="divider"></div>
+        <div class="sec-lbl">Especificación del vehículo</div>
+        <div class="tabs" id="especTabs">
+          <div class="tab sel" data-e="europeas" onclick="setEspec('europeas')">🇪🇺 Especificaciones Europeas</div>
+          <div class="tab" data-e="no-europeas" onclick="setEspec('no-europeas')">🌍 Especificaciones no Europeas</div>
+        </div>
+        <div id="noEuropeasNote" class="note-warn hidden" style="margin-top:10px">
+          ⚠ Los vehículos con especificaciones no europeas pueden requerir adaptaciones adicionales y tienen mayor complejidad en la ITV de importación. Consulta con el técnico.
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── MOD 3: SERVICIO IMPORTACIÓN MENDIVAN ── -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="badge">3</div>
+        <h2>Servicio Importación MendiVan</h2>
+      </div>
+      <div class="card-bd">
+        <div class="svc-cards" id="svcCards">
+          <div class="svc-card sel" data-s="furgoneta" onclick="setServicio('furgoneta')">
+            <div class="svc-icon">🚐</div>
+            <div class="svc-body">
+              <div class="svc-name">Furgoneta vacía</div>
+              <div class="svc-descr">Honorarios por importación de furgoneta sin camperizar. Precio sujeto a IVA 21%.</div>
+            </div>
+            <input type="number" class="svc-price-input" id="svcFurgonetaPrecio" value="990" min="0" onclick="event.stopPropagation()" oninput="updateSvcPrice()">
+          </div>
+          <div class="svc-card" data-s="camper_autocara" onclick="setServicio('camper_autocara')">
+            <div class="svc-icon">🏕</div>
+            <div class="svc-body">
+              <div class="svc-name">Camper / Autocaravana</div>
+              <div class="svc-descr">Honorarios por importación de camper o autocaravana. Precio sujeto a IVA 21%.</div>
+            </div>
+            <input type="number" class="svc-price-input" id="svcCamperPrecio" value="1490" min="0" onclick="event.stopPropagation()" oninput="updateSvcPrice()">
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--g500);text-align:right">Los honorarios se facturan con IVA 21% — ambos importes se suman al total.</div>
+      </div>
+    </div>
+
+    <!-- ── MOD 4: COSTES EDITABLES ── -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="badge">4</div>
+        <h2>Costes y Trámites</h2>
+      </div>
+      <div class="card-bd">
+        <div class="note-info" style="margin-top:0;margin-bottom:12px">
+          IVA e Impuesto de Matriculación (IEDMT) se calculan automáticamente según la legislación vigente.
+        </div>
+        <label class="costs-toggle">
+          <input type="checkbox" id="editCostsToggle" onchange="toggleCostsPanel()">
+          Editar costes manualmente
+        </label>
+
+        <div class="costs-panel" id="costsPanel">
+          <div class="cost-hdr">
+            <span>Partida</span>
+            <span title="Incluir en cálculo">✓</span>
+            <span>Mín. (€)</span>
+            <span>Máx. (€)</span>
+          </div>
+
+          <!-- ── SECCIÓN: EN ALEMANIA ── -->
+          <div class="cost-sec">🇩🇪 En Alemania</div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Revisión / Inspección mecánica <small>En origen, antes de comprar</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incRevision" checked onchange="recalculate()">
+            <input type="number" id="minRevision" value="200" min="0" oninput="recalculate()">
+            <input type="number" id="maxRevision" value="450" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Placas Temporales + Seguro Exportación</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incPlacasTemp" checked onchange="recalculate()">
+            <input type="number" id="minPlacasTemp" value="250" min="0" oninput="recalculate()">
+            <input type="number" id="maxPlacasTemp" value="450" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Transporte en Camión / Portavehículos <small>Precio ajustable según ruta y proveedor</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incCamion" onchange="recalculate()">
+            <input type="number" id="minCamion" value="600" min="0" oninput="recalculate()">
+            <input type="number" id="maxCamion" value="1200" min="0" oninput="recalculate()">
+          </div>
+
+          <!-- ── SECCIÓN: TRÁMITES EN ESPAÑA ── -->
+          <div class="cost-sec">🇪🇸 Trámites en España</div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">ITV Importación</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incITV" checked onchange="recalculate()">
+            <input type="number" id="minITV" value="180" min="0" oninput="recalculate()">
+            <input type="number" id="maxITV" value="250" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-fixed">
+            <div class="cost-lbl">Matriculación DGT <small>Tasa oficial fija</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incDGT" checked onchange="recalculate()">
+            <div class="cost-fixed-val">99,77 €</div>
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Ficha Técnica Reducida <small>Necesaria cuando el vehículo no dispone de COC europeo</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incFichaTecnica" onchange="recalculate()">
+            <input type="number" id="minFichaTecnica" value="100" min="0" oninput="recalculate()">
+            <input type="number" id="maxFichaTecnica" value="100" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Placas Españolas</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incPlacas" checked onchange="recalculate()">
+            <input type="number" id="minPlacas" value="30" min="0" oninput="recalculate()">
+            <input type="number" id="maxPlacas" value="40" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">IVTM — Impuesto Circulación <small>Varía según municipio y potencia fiscal</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incIVTM" checked onchange="recalculate()">
+            <input type="number" id="minIVTM" value="80" min="0" oninput="recalculate()">
+            <input type="number" id="maxIVTM" value="150" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Gestoría</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incGestoria" checked onchange="recalculate()">
+            <input type="number" id="minGestoria" value="150" min="0" oninput="recalculate()">
+            <input type="number" id="maxGestoria" value="200" min="0" oninput="recalculate()">
+          </div>
+
+          <!-- ── SECCIÓN: SERVICIOS OPCIONALES ── -->
+          <div class="cost-sec">🛡️ Servicios Opcionales</div>
+
+          <div class="cost-cols">
+            <div class="cost-lbl">Garantía (1 año)</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incGarantia" checked onchange="recalculate()">
+            <input type="number" id="minGarantia" value="250" min="0" oninput="recalculate()">
+            <input type="number" id="maxGarantia" value="350" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-fixed" id="rowHomologacion" style="display:none">
+            <div class="cost-lbl">Homologación Unitaria <small>Solo vehículos camperizados N1</small></div>
+            <input type="checkbox" class="cost-toggle-cb" id="incHomologacion" checked onchange="recalculate()">
+            <div class="cost-fixed-val">1.500 €</div>
+          </div>
+
+          <div class="travel-row">
+            <input type="checkbox" id="incViaje" onchange="recalculate()">
+            <label for="incViaje">Gastos personales de viaje (hotel, comida, gasolina)</label>
+          </div>
+          <div class="cost-cols" id="rowViaje" style="display:none">
+            <div class="cost-lbl">Gastos Personales de Viaje</div>
+            <input type="checkbox" class="cost-toggle-cb" id="incViajeRow" checked onchange="recalculate()">
+            <input type="number" id="minViaje" value="150" min="0" oninput="recalculate()">
+            <input type="number" id="maxViaje" value="400" min="0" oninput="recalculate()">
+          </div>
+
+          <div class="cost-actions">
+            <button class="btn btn-sec btn-sm" onclick="resetCosts()">↺ Restaurar valores</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS CARD -->
+    <div class="card">
+      <div class="results-hd">
+        <h2>💶 Coste Total Estimado</h2>
+        <span class="tag-white">Tiempo real</span>
+      </div>
+      <div class="card-bd" id="resultsBody">
+        <div class="empty-state" id="emptyState">
+          <div class="ei">🚐</div>
+          <p>Introduce el precio de compra y las emisiones CO₂ para ver el cálculo completo.</p>
+        </div>
+        <div id="resultsContent" style="display:none">
+
+          <!-- 3 cards -->
+          <div class="result-3">
+            <div class="res-card rmin">
+              <div class="res-lbl">🟢 Mínimo</div>
+              <div class="res-amt" id="totalMin">—</div>
+              <div class="res-note">escenario optimista</div>
+            </div>
+            <div class="res-card rapprox">
+              <div class="res-lbl">Aproximado</div>
+              <div class="res-amt" id="totalApprox">—</div>
+              <div class="res-note">estimación principal</div>
+            </div>
+            <div class="res-card rmax">
+              <div class="res-lbl">🟠 Máximo</div>
+              <div class="res-amt" id="totalMax">—</div>
+              <div class="res-note">escenario pesimista</div>
+            </div>
+          </div>
+
+          <!-- Precio vehículo (informativo) -->
+          <div style="text-align:center;font-size:11px;color:var(--g500);margin-bottom:14px">
+            Precio vehículo: <strong id="precioVehiculo" style="color:var(--g700)">—</strong> · No incluido en el coste total
+          </div>
+
+          <!-- IEDMT detail -->
+          <div class="iedmt-box" id="iedmtBox">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <h4 style="margin-bottom:0">⚡ Detalle del Impuesto de Matriculación (IEDMT)</h4>
+              <button id="iedmtEditBtn" onclick="toggleIEDMTEdit()" style="font-size:11px;background:rgba(25,93,106,.1);border:1px solid rgba(25,93,106,.2);color:var(--verde);padding:3px 9px;border-radius:4px;cursor:pointer;font-family:inherit;transition:var(--tr)">✏ Editar</button>
+            </div>
+            <div id="iedmtDetail"></div>
+            <div id="iedmtEditPanel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(25,93,106,.12)">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <label style="font-size:11px;color:var(--g700);white-space:nowrap;font-weight:500">IEDMT a pagar (€):</label>
+                <input type="number" id="iedmtManualInput" min="0" placeholder="Ej: 1.250" style="flex:1;min-width:110px" oninput="applyIEDMTManual()">
+                <button onclick="resetIEDMTManual()" style="font-size:11px;background:var(--g200);border:none;color:var(--g700);padding:5px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap">↺ Auto</button>
+              </div>
+              <div id="iedmtManualNote" style="display:none;color:#539c88;font-size:11px;margin-top:6px">✏ Valor modificado manualmente</div>
+            </div>
+          </div>
+
+          <!-- Breakdown -->
+          <div class="breakdown">
+            <div class="breakdown-toggle" id="breakdownToggle" onclick="toggleBreakdown()">
+              <span>Ver desglose detallado</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="breakdown-body" id="breakdownBody">
+              <table class="bk-table" id="breakdownTable">
+                <thead>
+                  <tr>
+                    <th>Partida</th>
+                    <th>Mín</th>
+                    <th>Máx</th>
+                  </tr>
+                </thead>
+                <tbody id="breakdownRows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Considerations -->
+          <ul class="consid-list" id="considList"></ul>
+
+          <!-- Export section -->
+          <div style="border-top:1px solid var(--g200);padding-top:18px;margin-top:8px;display:flex;justify-content:center">
+            <button class="btn btn-orange" style="padding:12px 32px;font-size:14px;font-weight:600;gap:9px" onclick="openPdfModal()">
+              📄 Exportar Presupuesto PDF
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+      ⚠ Los costes mostrados son <strong>orientativos</strong> y pueden variar según el caso concreto. Se recomienda confirmar con una gestoría especializada antes de proceder. ITP sujeto a revisión por valor fiscal de tablas BOE.
+    </div>
+
+
+</div><!-- /app-wrap -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+const S = {
+  vendedor: 'rebu',    // rebu | iva | particular
+  comprador: 'particular', // particular | empresa
+  ccaa: 'madrid',
+  cvf: null,
+
+  marca: '', modelo: '',
+  anio: 2020, mes: null,
+  co2: null, precio: null,
+  kilometros: null, combustible: '',
+  tipoVehiculo: 'furgoneta',   // furgoneta | camper | autocaravana
+  especificaciones: 'europeas', // europeas | no-europeas
+
+  svcType: 'furgoneta', // furgoneta | camper_autocara
+  svcFurgoneta: 990,
+  svcCamper: 1490,
+  iedmtManual: null,
+  valorFiscalBOE: null,
+
+  apiKey: '',
+};
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+(function init() {
+  // Populate year selector
+  const selAnio = document.getElementById('anio');
+  for (let y = 2025; y >= 1990; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === 2020) o.selected = true;
+    selAnio.appendChild(o);
+  }
+  selAnio.addEventListener('change', recalculate);
+
+  // Load API key
+  const k = localStorage.getItem('mv_api_key');
+  if (k) { S.apiKey = k; document.getElementById('cfgApiKey').value = k; }
+
+  updateDynamicNote();
+  updatePrecioNota();
+  recalculate();
+})();
+
+// ══════════════════════════════════════════════════════════════
+//  SELECTORS
+// ══════════════════════════════════════════════════════════════
+function updatePrecioNota() {
+  const notas = {
+    rebu:       'Introduce el precio total de la factura (IVA incluido en el margen del dealer)',
+    iva:        'Introduce el precio neto sin IVA (base de la factura alemana sin el 19% MwSt)',
+    particular: 'Introduce el precio del contrato de compraventa (Kaufvertrag)',
+  };
+  document.getElementById('precioNota').textContent = notas[S.vendedor] || '';
+}
+
+function setVendedor(v) {
+  S.vendedor = v;
+  document.querySelectorAll('#vendedorCards .opt-card').forEach(c => {
+    c.classList.toggle('sel', c.dataset.v === v);
+  });
+  // Show/hide CCAA block
+  document.getElementById('ccaaBlock').classList.toggle('hidden', v !== 'particular');
+  updateDynamicNote();
+  updatePrecioNota();
+  recalculate();
+}
+
+function setComprador(c) {
+  S.comprador = c;
+  document.querySelectorAll('#compradorTabs .tab').forEach(t => {
+    t.classList.toggle('sel', t.dataset.c === c);
+  });
+  updateDynamicNote();
+  recalculate();
+}
+
+function setCCAA() {
+  S.ccaa = document.getElementById('ccaaSelect').value;
+  const isAndalucia = S.ccaa === 'andalucia';
+  document.getElementById('cvfBlock').style.display = isAndalucia ? '' : 'none';
+  recalculate();
+}
+
+function setTipo(t) {
+  S.tipoVehiculo = t;
+  document.querySelectorAll('#tipoCards .opt-card').forEach(c => {
+    c.classList.toggle('sel', c.dataset.t === t);
+  });
+  document.getElementById('camperNote').classList.toggle('hidden', t !== 'camper');
+  document.getElementById('autocaravanaNote').classList.toggle('hidden', t !== 'autocaravana');
+  // Homologación row visibility
+  document.getElementById('rowHomologacion').style.display = t === 'camper' ? '' : 'none';
+  recalculate();
+}
+
+function setEspec(e) {
+  S.especificaciones = e;
+  document.querySelectorAll('#especTabs .tab').forEach(t => {
+    t.classList.toggle('sel', t.dataset.e === e);
+  });
+  document.getElementById('noEuropeasNote').classList.toggle('hidden', e !== 'no-europeas');
+  recalculate();
+}
+
+function setServicio(s) {
+  S.svcType = s;
+  document.querySelectorAll('#svcCards .svc-card').forEach(c => {
+    c.classList.toggle('sel', c.dataset.s === s);
+  });
+  recalculate();
+}
+
+function updateSvcPrice() {
+  S.svcFurgoneta = parseFloat(document.getElementById('svcFurgonetaPrecio').value) || 990;
+  S.svcCamper    = parseFloat(document.getElementById('svcCamperPrecio').value)    || 1490;
+  recalculate();
+}
+
+function onPrecioChange() {
+  const boeField = document.getElementById('valorFiscalBOE');
+  if (boeField.value === '') {
+    const precioVal = document.getElementById('precio').value;
+    if (precioVal) boeField.value = precioVal;
+  }
+  recalculate();
+}
+
+function toggleIEDMTEdit() {
+  const panel = document.getElementById('iedmtEditPanel');
+  const isOpen = panel.style.display !== 'none';
+  if (!isOpen) {
+    // Pre-fill with current effective value if not already set
+    if (document.getElementById('iedmtManualInput').value === '') {
+      const calcVal = document.querySelector('#iedmtDetail .iedmt-row.hl span:last-child');
+      // Leave empty so user types their value; or pre-fill from state
+    }
+  }
+  panel.style.display = isOpen ? 'none' : '';
+}
+
+function applyIEDMTManual() {
+  const val = parseFloat(document.getElementById('iedmtManualInput').value);
+  S.iedmtManual = (!isNaN(val) && val >= 0) ? val : null;
+  document.getElementById('iedmtManualNote').style.display = S.iedmtManual !== null ? '' : 'none';
+  recalculate();
+}
+
+function resetIEDMTManual() {
+  S.iedmtManual = null;
+  document.getElementById('iedmtManualInput').value = '';
+  document.getElementById('iedmtManualNote').style.display = 'none';
+  document.getElementById('iedmtEditPanel').style.display = 'none';
+  recalculate();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DYNAMIC NOTE
+// ══════════════════════════════════════════════════════════════
+function updateDynamicNote() {
+  const noteEl = document.getElementById('dynamicNote');
+  const map = {
+    'rebu+particular':  ['REBU (§25a) a Particular','Sin ITP ni aranceles. Operación intracomunitaria habitual. Sin IVA deducible para el comprador. La opción más común para particulares.'],
+    'rebu+empresa':     ['REBU (§25a) a Empresa/Autónomo','Sin ITP. Sin IVA deducible aunque tengas ROI. Al no existir IVA desglosado en la factura, la empresa no puede recuperar ningún IVA en España.'],
+    'iva+particular':   ['Empresa con IVA a Particular','Sin ITP (operación intracomunitaria). El 19% MwSt alemán está incluido en el precio total — el particular no lo recupera.'],
+    'iva+empresa':      ['Empresa con IVA a Empresa (ROI)','Ventaja fiscal: el vendedor factura sin IVA (adquisición intracomunitaria) y el comprador autorepercute el 21% de IVA en España, que luego puede deducir íntegramente. Sin ITP.'],
+    'particular+particular': ['Particular a Particular (Kaufvertrag)','Aplica ITP en la CCAA de matriculación. Sin factura — se formaliza con contrato Kaufvertrag alemán. Hacienda puede valorar por encima del precio acordado.'],
+    'particular+empresa':    ['Particular a Empresa/Autónomo','Aplica ITP incluso para empresa (no hay factura ni IVA). Sin posibilidad de deducción. Poco habitual para empresas por la carga fiscal y complejidad.'],
+  };
+  const key = `${S.vendedor}+${S.comprador}`;
+  const data = map[key];
+  if (data) {
+    noteEl.innerHTML = `<strong>${data[0]}</strong>${data[1]}`;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STATE UPDATE
+// ══════════════════════════════════════════════════════════════
+function updateState() {
+  S.marca      = document.getElementById('marca').value.trim();
+  S.modelo     = document.getElementById('modelo').value.trim();
+  S.kilometros = parseFloat(document.getElementById('kilometros').value) || null;
+  S.combustible = document.getElementById('combustible').value.trim().toLowerCase();
+  renderResults(); // just re-render labels, no recalc needed
+}
+
+// ══════════════════════════════════════════════════════════════
+//  COSTS PANEL
+// ══════════════════════════════════════════════════════════════
+function toggleCostsPanel() {
+  const open = document.getElementById('editCostsToggle').checked;
+  document.getElementById('costsPanel').classList.toggle('open', open);
+}
+
+document.getElementById('incViaje').addEventListener('change', function() {
+  document.getElementById('rowViaje').style.display = this.checked ? '' : 'none';
+  recalculate();
+});
+
+function resetCosts() {
+  const defs = {
+    minITV:180, maxITV:250,
+    minPlacas:30, maxPlacas:40,
+    minGestoria:150, maxGestoria:200,
+    minPlacasTemp:250, maxPlacasTemp:450,
+    minRevision:200, maxRevision:450,
+    minIVTM:80, maxIVTM:150,
+    minGarantia:250, maxGarantia:350,
+    minViaje:150, maxViaje:400,
+    minCamion:600, maxCamion:1200,
+    minFichaTecnica:100, maxFichaTecnica:100,
+  };
+  Object.entries(defs).forEach(([id, v]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = v;
+  });
+  ['incITV','incDGT','incPlacas','incGestoria',
+   'incPlacasTemp','incRevision','incIVTM','incGarantia'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = true;
+  });
+  document.getElementById('incHomologacion').checked = true;
+  document.getElementById('incFichaTecnica').checked = false;
+  document.getElementById('incCamion').checked = false;
+  document.getElementById('incViaje').checked = false;
+  document.getElementById('rowViaje').style.display = 'none';
+  recalculate();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CALCULATIONS
+// ══════════════════════════════════════════════════════════════
+function getIEDMT(precio, co2, tipo) {
+  if (!precio || co2 === null || co2 === undefined || isNaN(co2)) return null;
+  let rate = 0, tramo = '';
+  if (co2 <= 0)        { rate = 0;      tramo = '0% — Eléctrico / exento'; }
+  else if (co2 <= 120) { rate = 0;      tramo = '0% — ≤120 g/km (exento)'; }
+  else if (co2 <= 159) { rate = 0.0475; tramo = '4,75% — 121–159 g/km'; }
+  else if (co2 <= 199) { rate = 0.0975; tramo = '9,75% — 160–199 g/km'; }
+  else                 { rate = 0.1475; tramo = '14,75% — ≥200 g/km'; }
+
+  if (rate === 0) return { rate, tramo, base: 0, baseMin: precio, impuesto: 0, ahorro: 0, bonif: 0, final: 0 };
+
+  const baseMin = precio / (1 + 0.21 + rate);
+  const ahorro  = precio * rate - baseMin * rate;
+  let impuesto  = baseMin * rate;
+  let bonif     = 0;
+  if (tipo === 'autocaravana') {
+    bonif    = impuesto * 0.30;
+    impuesto = impuesto * 0.70;
+  }
+  return { rate, tramo, base: precio, baseMin, ahorro, impuesto, bonif, final: impuesto };
+}
+
+function getITP(precio, ccaa, anio, combustible, cvf) {
+  if (!precio) return null;
+  const isElec = combustible && (combustible.includes('elec') || combustible.includes('bev') || combustible.includes('electric'));
+  const age = 2026 - (anio || 2020);
+
+  const rates = {
+    'andalucia':          () => (cvf && cvf >= 15) ? 0.08 : 0.04,
+    'aragon':             () => 0.04,
+    'asturias':           () => 0.08,
+    'baleares':           () => 0.04,
+    'canarias':           () => 0.065,
+    'cantabria':          () => 0.08,
+    'castilla-la-mancha': () => 0.06,
+    'castilla-leon':      () => 0.08,
+    'cataluna':           () => (age > 10 && precio < 40000) ? 0 : 0.05,
+    'extremadura':        () => 0.08,
+    'galicia':            () => isElec ? 0 : 0.03,
+    'la-rioja':           () => 0.06,
+    'madrid':             () => 0.04,
+    'murcia':             () => 0.06,
+    'navarra':            () => 0.06,
+    'pais-vasco':         () => 0.04,
+    'valencia':           () => 0.06,
+  };
+  const fn = rates[ccaa];
+  if (!fn) return null;
+  const rate = fn();
+  return { rate, itp: precio * rate, exento: rate === 0 };
+}
+
+function readNum(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function readBool(id) { return document.getElementById(id).checked; }
+
+function getCostSections() {
+  const iedmtBase = S.valorFiscalBOE || S.precio;
+  const iedmt = getIEDMT(iedmtBase, S.co2, S.tipoVehiculo);
+  const effectiveIedmtFinal = S.iedmtManual !== null ? S.iedmtManual : (iedmt ? iedmt.final : 0);
+  const itp = S.vendedor === 'particular' ? getITP(S.precio, S.ccaa, S.anio, S.combustible, S.cvf) : null;
+  const sections = [];
+
+  // ── Sección 1: En Alemania
+  const sec1 = [];
+  const svcBase  = S.svcType === 'furgoneta' ? S.svcFurgoneta : S.svcCamper;
+  const svcLabel = S.svcType === 'furgoneta' ? 'Furgoneta vacía' : 'Camper / Autocaravana';
+  const svcIVA   = Math.round(svcBase * 0.21 * 100) / 100;
+  sec1.push({ label: `Servicio Importación MendiVan — ${svcLabel}`, min: svcBase, max: svcBase, type: 'service' });
+  sec1.push({ label: 'IVA (21%) — Servicio MendiVan', min: svcIVA, max: svcIVA, type: 'tax' });
+  if (readBool('incRevision')) {
+    sec1.push({ label: 'Revisión / Inspección mecánica (Alemania)', min: readNum('minRevision'), max: readNum('maxRevision'), type: 'cost' });
+  }
+  if (readBool('incPlacasTemp')) {
+    sec1.push({ label: 'Placas Temporales + Seguro de Exportación', min: readNum('minPlacasTemp'), max: readNum('maxPlacasTemp'), type: 'cost' });
+  }
+  if (readBool('incCamion')) {
+    sec1.push({ label: 'Transporte en Camión / Portavehículos', min: readNum('minCamion'), max: readNum('maxCamion'), type: 'cost' });
+  }
+  if (sec1.length) sections.push({ id: 'alemania', title: '🇩🇪 En Alemania', pdfTitle: 'En Alemania', lines: sec1 });
+
+  // ── Sección 2: Trámites en España
+  const sec3 = [];
+  if (readBool('incITV')) {
+    sec3.push({ label: 'ITV Importación', min: readNum('minITV'), max: readNum('maxITV'), type: 'cost' });
+  }
+  if (iedmt && (effectiveIedmtFinal > 0)) {
+    sec3.push({ label: `IEDMT — Imp. Matriculación (${iedmt.tramo})`, min: effectiveIedmtFinal, max: effectiveIedmtFinal, type: 'tax' });
+  }
+  if (itp && itp.itp > 0) {
+    sec3.push({ label: `ITP — ${getCCAAName(S.ccaa)} (${(itp.rate*100).toFixed(1)}%)`, min: itp.itp, max: itp.itp, type: 'tax' });
+  }
+  if (readBool('incDGT')) {
+    sec3.push({ label: 'Matriculación DGT (tasa oficial)', min: 99.77, max: 99.77, type: 'cost' });
+  }
+  if (readBool('incFichaTecnica')) {
+    sec3.push({ label: 'Ficha Técnica Reducida', min: readNum('minFichaTecnica'), max: readNum('maxFichaTecnica'), type: 'cost' });
+  }
+  if (readBool('incPlacas')) {
+    sec3.push({ label: 'Placas Españolas', min: readNum('minPlacas'), max: readNum('maxPlacas'), type: 'cost' });
+  }
+  if (readBool('incIVTM')) {
+    sec3.push({ label: 'IVTM — Impuesto de Circulación (1er año)', min: readNum('minIVTM'), max: readNum('maxIVTM'), type: 'cost' });
+  }
+  if (readBool('incGestoria')) {
+    sec3.push({ label: 'Gestoría', min: readNum('minGestoria'), max: readNum('maxGestoria'), type: 'cost' });
+  }
+  if (sec3.length) sections.push({ id: 'espana', title: '🇪🇸 Trámites en España', pdfTitle: 'Tramites en Espana', lines: sec3 });
+
+  // ── Sección 3: Servicios Opcionales
+  const sec4 = [];
+  if (readBool('incGarantia')) {
+    sec4.push({ label: 'Garantía (1 año)', min: readNum('minGarantia'), max: readNum('maxGarantia'), type: 'cost' });
+  }
+  if (S.tipoVehiculo === 'camper' && readBool('incHomologacion')) {
+    sec4.push({ label: 'Homologación Unitaria (camper N1)', min: 1500, max: 1500, type: 'cost' });
+  }
+  if (readBool('incViaje') && readBool('incViajeRow')) {
+    sec4.push({ label: 'Gastos Personales de Viaje (hotel, comida, combustible)', min: readNum('minViaje'), max: readNum('maxViaje'), type: 'cost' });
+  }
+  if (sec4.length) sections.push({ id: 'opcionales', title: '🛡️ Servicios Opcionales', pdfTitle: 'Servicios Opcionales', lines: sec4 });
+
+  return { sections, iedmt, itp, effectiveIedmtFinal };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RECALCULATE + RENDER
+// ══════════════════════════════════════════════════════════════
+function recalculate() {
+  // Read values
+  S.anio       = parseInt(document.getElementById('anio').value) || 2020;
+  S.mes        = parseInt(document.getElementById('mes').value) || null;
+  S.co2        = parseFloat(document.getElementById('co2').value);
+  S.precio     = parseFloat(document.getElementById('precio').value) || null;
+  S.marca      = document.getElementById('marca').value.trim();
+  S.modelo     = document.getElementById('modelo').value.trim();
+  S.kilometros = parseFloat(document.getElementById('kilometros').value) || null;
+  S.combustible= document.getElementById('combustible').value.trim().toLowerCase();
+  S.cvf        = parseFloat(document.getElementById('cvfInput').value) || null;
+  S.svcFurgoneta   = parseFloat(document.getElementById('svcFurgonetaPrecio').value) || 990;
+  S.svcCamper      = parseFloat(document.getElementById('svcCamperPrecio').value)    || 1490;
+  S.valorFiscalBOE = parseFloat(document.getElementById('valorFiscalBOE').value)     || null;
+
+  if (!S.precio || isNaN(S.co2)) {
+    document.getElementById('emptyState').style.display = '';
+    document.getElementById('resultsContent').style.display = 'none';
+    return;
+  }
+
+  const { sections, iedmt, itp, effectiveIedmtFinal } = getCostSections();
+
+  let totalMin = 0, totalMax = 0;
+  sections.forEach(sec => sec.lines.forEach(l => { totalMin += l.min; totalMax += l.max; }));
+
+  const totalApprox = (totalMin + totalMax) / 2;
+
+  // Show results
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('resultsContent').style.display = '';
+
+  document.getElementById('totalMin').textContent    = fmtEUR(totalMin);
+  document.getElementById('totalApprox').textContent = fmtEUR(totalApprox);
+  document.getElementById('totalMax').textContent    = fmtEUR(totalMax);
+  document.getElementById('precioVehiculo').textContent = fmtEUR(S.precio);
+
+  renderIEDMT(iedmt, effectiveIedmtFinal);
+  renderBreakdown(sections, totalMin, totalMax);
+  renderConsiderations(iedmt, itp);
+}
+
+function renderIEDMT(iedmt, effectiveFinal) {
+  const box = document.getElementById('iedmtBox');
+  const det = document.getElementById('iedmtDetail');
+  if (!iedmt || (iedmt.final === 0 && (S.iedmtManual === null || S.iedmtManual === 0))) {
+    box.classList.remove('show');
+    return;
+  }
+  box.classList.add('show');
+  let html = `
+    <div class="iedmt-row"><span>Tramo CO₂</span><span><strong>${iedmt.tramo}</strong></span></div>
+    <div class="iedmt-row"><span>Base de cálculo (valor fiscal BOE)</span><span>${fmtEUR(iedmt.base)}</span></div>
+    <div class="iedmt-row saving"><span>Base minorada intracomunitaria ÷(1 + 21% + ${(iedmt.rate*100).toFixed(2)}%)</span><span>${fmtEUR(iedmt.baseMin)}</span></div>
+    <div class="iedmt-row saving"><span>Ahorro por minoración</span><span>- ${fmtEUR(iedmt.ahorro)}</span></div>`;
+  if (iedmt.bonif > 0) {
+    html += `<div class="iedmt-row saving"><span>Bonificación 30% Autocaravana M1</span><span>- ${fmtEUR(iedmt.bonif)}</span></div>`;
+  }
+  if (S.iedmtManual !== null) {
+    html += `<div class="iedmt-row hl"><span>IEDMT calculado</span><span style="text-decoration:line-through;opacity:.5">${fmtEUR(iedmt.final)}</span></div>`;
+    html += `<div class="iedmt-row hl" style="color:#539c88"><span>✏ IEDMT a pagar (manual)</span><span>${fmtEUR(S.iedmtManual)}</span></div>`;
+  } else {
+    html += `<div class="iedmt-row hl"><span>IEDMT a pagar</span><span>${fmtEUR(effectiveFinal)}</span></div>`;
+  }
+  det.innerHTML = html;
+}
+
+function renderBreakdown(sections, totalMin, totalMax) {
+  const tbody = document.getElementById('breakdownRows');
+  let html = '';
+
+  sections.forEach(sec => {
+    html += `<tr class="tr-group"><td colspan="3">${sec.title}</td></tr>`;
+    sec.lines.forEach(l => html += bkRow(l.label, l.min, l.max, l.type === 'tax', l.type === 'service'));
+  });
+
+  html += `<tr class="tr-total">
+    <td>TOTAL ESTIMADO</td>
+    <td>${fmtEUR(totalMin)}</td>
+    <td>${fmtEUR(totalMax)}</td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function bkRow(label, min, max, isTax = false, isService = false) {
+  let cls = '';
+  if (isTax) cls = ' class="tr-tax"';
+  else if (isService) cls = ' class="tr-service"';
+  return `<tr${cls}><td>${label}</td><td>${fmtEUR(min)}</td><td>${fmtEUR(max)}</td></tr>`;
+}
+
+function renderConsiderations(iedmt, itp) {
+  const list = document.getElementById('considList');
+  const items = [];
+
+  const svcBase  = S.svcType === 'furgoneta' ? S.svcFurgoneta : S.svcCamper;
+  const svcLabel = S.svcType === 'furgoneta' ? 'Furgoneta vacía' : 'Camper / Autocaravana';
+  const svcTotal = Math.round(svcBase * 1.21);
+  items.push({ text: `Servicio Importación MendiVan: ${svcLabel} — ${fmtEUR(svcBase)} + IVA = ${fmtEUR(svcTotal)}`, cls: 'ci-good' });
+
+  if (S.vendedor === 'rebu' || S.vendedor === 'iva') {
+    items.push({ text: 'Sin ITP — operación intracomunitaria de adquisición', cls: 'ci-good' });
+  }
+  if (S.vendedor === 'iva' && S.comprador === 'empresa') {
+    items.push({ text: 'IVA deducible — ventaja fiscal para empresa/autónomo (adquisición intracomunitaria con ROI)', cls: 'ci-good' });
+  }
+  if (S.vendedor === 'particular') {
+    const ccaaName = getCCAAName(S.ccaa);
+    items.push({ text: `Aplica ITP en ${ccaaName}${itp ? ` — tipo ${(itp.rate*100).toFixed(1)}% → ${fmtEUR(itp.itp)}` : ''}`, cls: 'ci-warn' });
+    items.push({ text: 'Hacienda puede valorar el vehículo por encima del precio pagado. Importe ITP podría ser mayor.', cls: 'ci-warn' });
+  }
+
+  if (iedmt && iedmt.final > 0) {
+    items.push({ text: `Impuesto de matriculación (IEDMT): ${iedmt.tramo} → ${fmtEUR(iedmt.final)}`, cls: '' });
+    if (iedmt.bonif > 0) {
+      items.push({ text: 'Bonificación del 30% aplicada por ser Autocaravana M1 de fábrica', cls: 'ci-good' });
+    }
+  } else if (iedmt && iedmt.rate === 0) {
+    items.push({ text: `Vehículo exento de impuesto de matriculación — ${iedmt.tramo}`, cls: 'ci-good' });
+  }
+
+  items.push({ text: 'Requiere ITV de importación y homologación de ficha técnica española', cls: '' });
+  items.push({ text: 'Matriculación DGT y placas españolas incluidas en el cálculo', cls: '' });
+
+  if (S.tipoVehiculo === 'camper') {
+    items.push({ text: 'Requiere homologación unitaria individual (1.500€) para matricular como vehículo vivienda', cls: 'ci-warn' });
+  }
+  if (S.especificaciones === 'no-europeas') {
+    items.push({ text: 'Especificaciones no europeas: puede requerir adaptaciones técnicas adicionales para superar la ITV', cls: 'ci-warn' });
+  }
+
+  list.innerHTML = items.map(i =>
+    `<li class="${i.cls}"><span class="ci">→</span>${i.text}</li>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BREAKDOWN TOGGLE
+// ══════════════════════════════════════════════════════════════
+function toggleBreakdown() {
+  const toggle = document.getElementById('breakdownToggle');
+  const body   = document.getElementById('breakdownBody');
+  const open   = body.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  toggle.querySelector('span').textContent = open ? 'Ocultar desglose' : 'Ver desglose detallado';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MOBILE.DE IMPORT
+// ══════════════════════════════════════════════════════════════
+async function importFromMobileDE() {
+  const url = document.getElementById('mobileURL').value.trim();
+  if (!url) { showImportStatus('Por favor introduce una URL de mobile.de', 'error'); return; }
+  if (!S.apiKey) { showImportStatus('Configura tu API key de Anthropic primero (⚙ Configuración)', 'error'); return; }
+
+  const btn = document.getElementById('importBtn');
+  const txt = document.getElementById('importBtnText');
+  btn.disabled = true;
+  txt.innerHTML = '<span class="spin"></span> Importando…';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': S.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 600,
+        system: 'Eres un asistente especializado en extraer datos de anuncios de vehículos de mobile.de. Extrae los siguientes campos del anuncio y devuelve SOLO un JSON válido sin markdown ni bloques de código: marca, modelo, anio (número), mes_matriculacion (número 1-12 o null), co2 (número g/km o null), precio_eur (número), kilometros (número o null), combustible (string en español o null). Si no encuentras un campo, ponlo como null.',
+        messages: [{ role: 'user', content: `Extrae los datos de este anuncio de mobile.de: ${url}` }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Error HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('La respuesta no contiene JSON válido');
+    const v = JSON.parse(jsonMatch[0]);
+
+    // Fill form
+    if (v.marca)          document.getElementById('marca').value = v.marca;
+    if (v.modelo)         document.getElementById('modelo').value = v.modelo;
+    if (v.anio)           document.getElementById('anio').value = v.anio;
+    if (v.mes_matriculacion) document.getElementById('mes').value = v.mes_matriculacion;
+    if (v.co2 !== null && v.co2 !== undefined) document.getElementById('co2').value = v.co2;
+    if (v.precio_eur) {
+      document.getElementById('precio').value = v.precio_eur;
+      const boeField = document.getElementById('valorFiscalBOE');
+      if (boeField.value === '') boeField.value = v.precio_eur;
+    }
+    if (v.kilometros)     document.getElementById('kilometros').value = v.kilometros;
+    if (v.combustible)    document.getElementById('combustible').value = v.combustible;
+
+    showImportStatus('✓ Datos importados. Verifica los campos antes de continuar.', 'ok');
+    recalculate();
+  } catch (e) {
+    showImportStatus(`Error: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    txt.textContent = '⬇ Importar';
+  }
+}
+
+function showImportStatus(msg, type) {
+  const el = document.getElementById('importStatus');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.color = type === 'error' ? 'var(--terra)' : 'var(--verde-md)';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════════
+function openConfig() {
+  document.getElementById('configOverlay').classList.add('show');
+  document.getElementById('cfgApiKey').value = S.apiKey;
+}
+function closeConfig() {
+  document.getElementById('configOverlay').classList.remove('show');
+}
+function saveConfig() {
+  const key = document.getElementById('cfgApiKey').value.trim();
+  S.apiKey = key;
+  if (key) localStorage.setItem('mv_api_key', key);
+  else     localStorage.removeItem('mv_api_key');
+  closeConfig();
+}
+document.getElementById('configOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfig();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  PDF MODAL
+// ══════════════════════════════════════════════════════════════
+let pdfPhotoDataURL = null;
+let pdfPhotoNW = 0;
+let pdfPhotoNH = 0;
+let logoDataURL = null;
+window.addEventListener('load', function() {
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    try { logoDataURL = canvas.toDataURL('image/png'); } catch(e) {}
+  };
+  img.src = 'logo.png';
+});
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    pdfPhotoDataURL = e.target.result;
+    const img = document.getElementById('photoPreviewImg');
+    img.onload = function() { pdfPhotoNW = img.naturalWidth; pdfPhotoNH = img.naturalHeight; };
+    img.src = pdfPhotoDataURL;
+    document.getElementById('photoPlaceholder').classList.add('hidden');
+    document.getElementById('photoPreviewWrap').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto() {
+  pdfPhotoDataURL = null; pdfPhotoNW = 0; pdfPhotoNH = 0;
+  document.getElementById('pdfFoto').value = '';
+  document.getElementById('photoPreviewImg').src = '';
+  document.getElementById('photoPlaceholder').classList.remove('hidden');
+  document.getElementById('photoPreviewWrap').classList.add('hidden');
+}
+
+function openPdfModal() { document.getElementById('pdfOverlay').classList.add('show'); }
+function closePdfModal() { document.getElementById('pdfOverlay').classList.remove('show'); }
+document.getElementById('pdfOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closePdfModal();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  PDF GENERATION
+// ══════════════════════════════════════════════════════════════
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const PW = 210, PH = 297;
+  const ML = 18, MR = 192, MT = 20;
+  let Y = MT;
+
+  const C_VERDE   = [25,  93, 106];
+  const C_VERDE_MD= [83, 156, 136];
+  const C_TERRA   = [159, 65,  40];
+  const C_NARANJA = [254,171, 112];
+  const C_GRAY    = [120,130,120];
+  const C_LIGHT   = [240,244,237];
+  const C_BLACK   = [26,  42,  26];
+
+  const cliente  = document.getElementById('pdfCliente').value.trim() || 'Cliente';
+  const refVal   = document.getElementById('pdfRef').value.trim();
+  const notasVal = document.getElementById('pdfNotas').value.trim();
+
+  // jsPDF helvetica only supports latin-1; sanitize chars outside that range
+  function ps(str) {
+    return String(str)
+      .replace(/→/g, '->')   // →
+      .replace(/—/g, '-')    // —
+      .replace(/–/g, '-')    // –
+      .replace(/₂/g, '2')    // ₂
+      .replace(/·/g, '·');   // · (middle dot, already in latin-1 but ensure)
+  }
+
+  function setFont(size, style='normal', color=C_BLACK) {
+    doc.setFontSize(size);
+    doc.setFont('helvetica', style);
+    doc.setTextColor(...color);
+  }
+  function setFill(rgb) { doc.setFillColor(...rgb); }
+  function setDraw(rgb) { doc.setDrawColor(...rgb); }
+
+  // ── HEADER BG
+  const HDR_H = 56;
+  setFill(C_VERDE);
+  doc.rect(0, 0, PW, HDR_H, 'F');
+
+  // ── Logo image (left)
+  if (logoDataURL) {
+    doc.addImage(logoDataURL, 'PNG', ML, 7, 30, 30);
+  } else {
+    setFill(C_VERDE_MD);
+    doc.rect(ML, 9, 18, 18, 'F');
+    setFont(11, 'bold', [255,255,255]);
+    doc.text('MV', ML + 4, 19.5);
+  }
+
+  // ── Company name + subtitle + date (left side)
+  setFont(18, 'bold', [255,255,255]);
+  doc.text('MendiVan', ML + 34, 19);
+  setFont(10, 'normal', [200,230,225]);
+  doc.text(ps('Importación de Vehículos — Alemania -> España'), ML + 34, 28);
+  const today = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+  setFont(9, 'normal', [170,210,205]);
+  doc.text(`Fecha: ${today}`, ML + 34, 36);
+  if (refVal) doc.text(`Ref: ${ps(refVal)}`, ML + 34, 43);
+
+  // ── Vehicle photo (right side)
+  const PHOTO_X = MR - 62;
+  const PHOTO_Y = 5;
+  const PHOTO_W = 63;
+  const PHOTO_H = 46;
+
+  if (pdfPhotoDataURL && pdfPhotoNW && pdfPhotoNH) {
+    const imgAspect = pdfPhotoNW / pdfPhotoNH;
+    const boxAspect = PHOTO_W / PHOTO_H;
+    let drawW, drawH, drawX, drawY;
+    if (imgAspect > boxAspect) {
+      drawW = PHOTO_W; drawH = PHOTO_W / imgAspect;
+      drawX = PHOTO_X; drawY = PHOTO_Y + (PHOTO_H - drawH) / 2;
+    } else {
+      drawH = PHOTO_H; drawW = PHOTO_H * imgAspect;
+      drawX = PHOTO_X + (PHOTO_W - drawW) / 2; drawY = PHOTO_Y;
+    }
+    const imgFmt = pdfPhotoDataURL.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+    doc.addImage(pdfPhotoDataURL, imgFmt, drawX, drawY, drawW, drawH);
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H, 2, 2, 'S');
+  } else {
+    setFill([35, 108, 122]);
+    doc.roundedRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H, 2, 2, 'F');
+    setFont(8, 'normal', [150, 195, 190]);
+    doc.text('Sin foto', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2 + 1, { align: 'center' });
+    doc.text('del vehiculo', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2 + 7, { align: 'center' });
+  }
+
+  Y = HDR_H + 8;
+
+  // ── CLIENT & VEHICLE INFO BOX
+  setFill(C_LIGHT);
+  setDraw([220,230,220]);
+  doc.setLineWidth(0);
+  doc.rect(ML, Y, MR - ML, 30, 'F');
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(...C_VERDE_MD);
+  doc.rect(ML, Y, 3, 30, 'F');
+
+  setFont(8, 'bold', C_GRAY);
+  doc.text('CLIENTE', ML + 6, Y + 7);
+  setFont(12, 'bold', C_BLACK);
+  doc.text(cliente, ML + 6, Y + 14);
+
+  const vehicleLabel = [S.marca, S.modelo].filter(Boolean).join(' ') || 'Vehículo no especificado';
+  const vehicleDetail = [
+    S.anio ? `Año ${S.anio}` : null,
+    S.co2 !== null && !isNaN(S.co2) ? `${S.co2} g/km CO2` : null,
+    S.precio ? `Precio: ${fmtEUR(S.precio)}` : null,
+    S.kilometros ? `${S.kilometros.toLocaleString('es-ES')} km` : null,
+  ].filter(Boolean).join(' · ');
+
+  setFont(8, 'bold', C_GRAY);
+  doc.text('VEHÍCULO', MR - 80, Y + 7);
+  setFont(11, 'bold', C_BLACK);
+  doc.text(vehicleLabel, MR - 80, Y + 14);
+  setFont(9, 'normal', C_GRAY);
+  doc.text(vehicleDetail, MR - 80, Y + 21);
+
+  Y += 38;
+
+  // ── COST SUMMARY
+  setFont(12, 'bold', C_VERDE);
+  doc.text('Resumen de Costes Estimados', ML, Y);
+  Y += 7;
+
+  // 3 boxes
+  const bw = (MR - ML - 8) / 3;
+  const boxData = [
+    { label: 'MÍNIMO', val: document.getElementById('totalMin').textContent, color: C_VERDE_MD },
+    { label: 'APROXIMADO', val: document.getElementById('totalApprox').textContent, color: C_VERDE, main: true },
+    { label: 'MÁXIMO', val: document.getElementById('totalMax').textContent, color: C_NARANJA },
+  ];
+  boxData.forEach((b, i) => {
+    const bx = ML + i * (bw + 4);
+    setFill(b.main ? C_VERDE : C_LIGHT);
+    doc.rect(bx, Y, bw, 20, 'F');
+    setFont(8, 'bold', b.main ? [255,255,255] : C_GRAY);
+    doc.text(b.label, bx + bw/2, Y + 7, { align: 'center' });
+    setFont(13, 'bold', b.main ? [255,255,255] : b.color);
+    doc.text(b.val, bx + bw/2, Y + 15, { align: 'center' });
+  });
+  Y += 27;
+
+  // Price note
+  setFont(8, 'normal', C_GRAY);
+  doc.text(`* Precio del vehículo (${document.getElementById('precioVehiculo').textContent}) no incluido en el coste total.`, ML, Y);
+  Y += 10;
+
+  // ── BREAKDOWN TABLE
+  setFont(11, 'bold', C_VERDE);
+  doc.text('Desglose de Costes', ML, Y);
+  Y += 6;
+
+  // Table header
+  setFill(C_VERDE);
+  doc.rect(ML, Y, MR - ML, 7, 'F');
+  setFont(8, 'bold', [255,255,255]);
+  doc.text('Partida', ML + 2, Y + 5);
+  doc.text('Mínimo', MR - 30, Y + 5, { align: 'right' });
+  doc.text('Máximo', MR, Y + 5, { align: 'right' });
+  Y += 7;
+
+  // Get all data again for PDF
+  const { sections: pdfSections, iedmt, itp, effectiveIedmtFinal } = getCostSections();
+
+  let pdfTotalMin = 0, pdfTotalMax = 0;
+
+  pdfSections.forEach(sec => {
+    if (Y > 248) { doc.addPage(); Y = MT; }
+    // Section header
+    setFill(C_VERDE_MD);
+    doc.rect(ML, Y, MR - ML, 6, 'F');
+    setFont(7, 'bold', [255,255,255]);
+    doc.text(ps(sec.pdfTitle).toUpperCase(), ML + 2, Y + 4.2);
+    Y += 6;
+
+    sec.lines.forEach((row, idx) => {
+      if (Y > 250) { doc.addPage(); Y = MT; }
+      setFill(idx % 2 === 0 ? [255,255,255] : C_LIGHT);
+      doc.rect(ML, Y, MR - ML, 6, 'F');
+      const isService = row.type === 'service';
+      const isTax     = row.type === 'tax';
+      setFont(8, isService ? 'bold' : 'normal', isTax ? C_VERDE_MD : C_BLACK);
+      doc.text(ps(row.label), ML + 2, Y + 4.2);
+      doc.text(fmtEUR(row.min), MR - 30, Y + 4.2, { align: 'right' });
+      doc.text(fmtEUR(row.max), MR, Y + 4.2, { align: 'right' });
+      pdfTotalMin += row.min; pdfTotalMax += row.max;
+      Y += 6;
+    });
+  });
+
+  // Total row
+  if (Y > 250) { doc.addPage(); Y = MT; }
+  setFill(C_VERDE);
+  doc.rect(ML, Y, MR - ML, 8, 'F');
+  setFont(9, 'bold', [255,255,255]);
+  doc.text('TOTAL ESTIMADO', ML + 2, Y + 5.5);
+  doc.text(fmtEUR(pdfTotalMin), MR - 30, Y + 5.5, { align: 'right' });
+  doc.text(fmtEUR(pdfTotalMax), MR, Y + 5.5, { align: 'right' });
+  Y += 8;
+
+  // ── PRECIO TOTAL EN ESPAÑA
+  if (S.precio) {
+    const precioTotalEsp = S.precio + (pdfTotalMin + pdfTotalMax) / 2;
+    setFill(C_VERDE);
+    doc.rect(ML, Y, MR - ML, 11, 'F');
+    setFont(9, 'bold', [255,255,255]);
+    doc.text(ps('PRECIO TOTAL EN ESPAÑA'), ML + 2, Y + 7);
+    doc.text(fmtEUR(precioTotalEsp), MR, Y + 7, { align: 'right' });
+    Y += 17;
+  } else {
+    Y += 6;
+  }
+
+  // ── NOTAS
+  if (notasVal) {
+    if (Y > 240) { doc.addPage(); Y = MT; }
+    setFont(10, 'bold', C_VERDE);
+    doc.text('Notas adicionales', ML, Y);
+    Y += 5;
+    setFont(9, 'normal', C_BLACK);
+    const lines2 = doc.splitTextToSize(notasVal, MR - ML);
+    doc.text(lines2, ML, Y);
+    Y += lines2.length * 5 + 6;
+  }
+
+  // ── FOOTER
+  const footerY = PH - 18;
+  setFill([245,249,243]);
+  doc.rect(0, footerY - 4, PW, 22, 'F');
+  setFont(8, 'normal', C_TERRA);
+  const disclaimer = 'Presupuesto orientativo elaborado por MendiVan. Los importes pueden variar según el caso concreto. Se recomienda confirmar con gestoría especializada antes de proceder.';
+  const disclaimerLines = doc.splitTextToSize(disclaimer, PW - 36);
+  doc.text(disclaimerLines, PW/2, footerY + 2, { align: 'center' });
+  setFont(8, 'normal', C_GRAY);
+  doc.text('mendivan.com', PW/2, footerY + 10, { align: 'center' });
+
+  // Save
+  const vehicleName = [S.marca, S.modelo].filter(Boolean).join('_').replace(/\s+/g,'_') || 'vehiculo';
+  const dateStr = new Date().toISOString().slice(0,10);
+  doc.save(`MendiVan_Presupuesto_${vehicleName}_${dateStr}.pdf`);
+  closePdfModal();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+function fmtEUR(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency', currency: 'EUR',
+    minimumFractionDigits: 0, maximumFractionDigits: 0
+  }).format(n);
+}
+
+function getCCAAName(ccaa) {
+  const m = {
+    'andalucia':'Andalucía','aragon':'Aragón','asturias':'Asturias',
+    'baleares':'Baleares','canarias':'Canarias','cantabria':'Cantabria',
+    'castilla-la-mancha':'Castilla-La Mancha','castilla-leon':'Castilla y León',
+    'cataluna':'Cataluña','extremadura':'Extremadura','galicia':'Galicia',
+    'la-rioja':'La Rioja','madrid':'Madrid','murcia':'Murcia',
+    'navarra':'Navarra','pais-vasco':'País Vasco','valencia':'Valencia',
+  };
+  return m[ccaa] || ccaa;
+}
+</script>
+</body>
+</html>

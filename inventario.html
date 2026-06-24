@@ -1,0 +1,576 @@
+<!-- VIEW: INVENTARIO -->
+<div id="inventario-view" class="view">
+  <div class="section-header">
+    <h1 class="section-title">Inventario</h1>
+    <button class="btn btn-primary" onclick="showNuevoInventarioModal()">＋ Añadir vehículo</button>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+    <input type="text" id="inv-search-input" class="form-control" style="max-width:260px" placeholder="Buscar por marca, modelo, color..." oninput="renderInventarioList()">
+  </div>
+  <div class="inv-filters">
+    <div class="inv-filter-group" id="inv-filter-cat">
+      <button class="filter-btn active" onclick="setInvFilter('cat','',this)">Todos</button>
+      <button class="filter-btn" onclick="setInvFilter('cat','furgoneta_vacia',this)">Furgoneta Vacía</button>
+      <button class="filter-btn" onclick="setInvFilter('cat','camper_serie',this)">Camper de Serie</button>
+      <button class="filter-btn" onclick="setInvFilter('cat','autocaravana',this)">Autocaravana</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="inv-filter-group" id="inv-filter-origen">
+      <button class="filter-btn active" onclick="setInvFilter('origen','',this)">Todos</button>
+      <button class="filter-btn" onclick="setInvFilter('origen','alemania',this)">🇩🇪 Alemania</button>
+      <button class="filter-btn" onclick="setInvFilter('origen','espana',this)">🇪🇸 España</button>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="inv-filter-group" id="inv-filter-estado">
+      <button class="filter-btn active" onclick="setInvFilter('estado','',this)">Todos</button>
+      <button class="filter-btn" onclick="setInvFilter('estado','disponible',this)">Disponible</button>
+      <button class="filter-btn" onclick="setInvFilter('estado','reservado',this)">Reservado</button>
+      <button class="filter-btn" onclick="setInvFilter('estado','vendido',this)">Vendido</button>
+    </div>
+  </div>
+  <div id="inv-grid" class="inv-grid"></div>
+</div>
+
+<!-- VIEW: FICHA INVENTARIO -->
+<div id="ficha-inventario-view" class="view">
+  <div class="back-btn" onclick="showView('inventario');renderInventarioList()">← Volver al inventario</div>
+  <div class="ficha-header">
+    <div>
+      <div class="ficha-title" id="fi-titulo">—</div>
+      <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="fi-badges"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="archivarInventarioItem()">📦 Archivar</button>
+      <button class="btn btn-danger btn-sm" onclick="eliminarInventarioItem()">🗑 Eliminar</button>
+    </div>
+  </div>
+  <div class="inv-detail-grid">
+    <div id="fi-left"></div>
+    <div id="fi-right"></div>
+  </div>
+  <div id="fi-export" class="export-section">
+    <div class="export-section-title">📤 Exportar para WordPress / Elementor</div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="generarHTMLExport()">Generar HTML</button>
+      <button class="btn btn-ghost btn-sm" id="btn-copiar-html" onclick="copiarHTMLExport()">📋 Copiar</button>
+    </div>
+    <textarea class="export-html-area" id="export-html-area" readonly placeholder="Haz clic en 'Generar HTML' para crear el bloque listo para WordPress..."></textarea>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// BADGE HELPERS
+// =========================================================
+function invCategoriaBadge(cat) {
+  const labels = { furgoneta_vacia:'Furgoneta', camper_serie:'Camper', autocaravana:'Autocaravana' };
+  return `<span class="badge badge-categoria">${labels[cat]||cat||'—'}</span>`;
+}
+function invOrigenBadge(origen) {
+  return origen==='alemania'
+    ? `<span class="badge badge-de">🇩🇪 Alemania</span>`
+    : `<span class="badge badge-es">🇪🇸 España</span>`;
+}
+function invEstadoBadge(estado) {
+  const labels = { disponible:'Disponible', reservado:'Reservado', vendido:'Vendido', archivado:'Archivado' };
+  return `<span class="badge badge-${estado}">${labels[estado]||estado||'—'}</span>`;
+}
+function invBadges(item) {
+  return invCategoriaBadge(item.categoria)+invOrigenBadge(item.origen)+invEstadoBadge(item.estado);
+}
+function fldInv(field, label, value, type, id) {
+  return `<div class="form-group">
+    <label class="form-label">${label}</label>
+    <input type="${type}" class="form-control" value="${esc(value||'')}"
+      onchange="updateField('${id}','inventario','${field}',this.value)">
+  </div>`;
+}
+
+// =========================================================
+// FILTERS & LIST
+// =========================================================
+function setInvFilter(type, val, btn) {
+  invFilters[type] = val;
+  const groupId = type==='cat'?'inv-filter-cat':type==='origen'?'inv-filter-origen':'inv-filter-estado';
+  document.getElementById(groupId).querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInventarioList();
+}
+
+function renderInventarioList() {
+  const query = (document.getElementById('inv-search-input')?.value||'').toLowerCase();
+  const grid = document.getElementById('inv-grid');
+  if (!grid) return;
+
+  const list = Object.values(inventario).filter(item => {
+    if (item.estado==='archivado'&&!invFilters.estado) return false;
+    if (invFilters.cat&&item.categoria!==invFilters.cat) return false;
+    if (invFilters.origen&&item.origen!==invFilters.origen) return false;
+    if (invFilters.estado&&item.estado!==invFilters.estado) return false;
+    if (query) return (item.marca||'').toLowerCase().includes(query)||(item.modelo||'').toLowerCase().includes(query)||(item.color||'').toLowerCase().includes(query);
+    return true;
+  }).sort((a,b) => (b.fecha_entrada||'').localeCompare(a.fecha_entrada||''));
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🚐</div><p>No hay vehículos en el inventario todavía.<br>Añade el primero con el botón "＋ Añadir vehículo".</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(item => {
+    const foto = (item.fotos||[])[0]||'';
+    return `<div class="inv-card" onclick="openInventarioItem('${item.id}')">
+      <div class="inv-card-photo">
+        ${foto?`<img src="${esc(foto)}" alt="${esc(item.marca)} ${esc(item.modelo)}" onerror="this.parentElement.innerHTML='🚐'">` : '🚐'}
+      </div>
+      <div class="inv-card-body">
+        <div class="inv-card-badges">${invBadges(item)}</div>
+        <div class="inv-card-title">${esc(item.marca||'')} ${esc(item.modelo||'')} ${item.anio||''}</div>
+        <div class="inv-card-meta">${[item.km?item.km.toLocaleString('es-ES')+' km':null,item.combustible,item.potencia_cv?item.potencia_cv+' CV':null].filter(Boolean).join(' · ')||'—'}</div>
+        <div class="inv-card-prices">
+          ${item.precio_alemania?`<div><div class="inv-price-label">Alemania</div><div class="inv-price-de">€${Number(item.precio_alemania).toLocaleString('es-ES')}</div></div>`:''}
+          ${item.precio_venta_espana?`<div><div class="inv-price-label">Venta</div><div class="inv-price-es">€${Number(item.precio_venta_espana).toLocaleString('es-ES')}</div></div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =========================================================
+// FICHA DETALLE
+// =========================================================
+function openInventarioItem(id) {
+  currentInventarioId = id;
+  const item = inventario[id];
+  if (!item) return;
+  document.getElementById('fi-titulo').textContent = `${item.marca||''} ${item.modelo||''} ${item.anio||''}`.trim()||'Sin nombre';
+  document.getElementById('fi-badges').innerHTML = invBadges(item)+' '+wpBadge(item);
+  const exportArea = document.getElementById('export-html-area');
+  if (exportArea) exportArea.value = '';
+  renderFichaInvLeft(item);
+  renderFichaInvRight(item);
+  showView('ficha-inventario');
+}
+
+function renderFichaInvLeft(item) {
+  const el = document.getElementById('fi-left');
+  const fotos = item.fotos||[];
+  const foto0 = fotos[0]||'';
+  el.innerHTML = `
+  <div class="card" style="margin-bottom:16px">
+    <div class="inv-gallery">
+      <div class="inv-gallery-main" id="inv-main-photo">
+        ${foto0?`<img src="${esc(foto0)}" alt="foto" onerror="this.parentElement.innerHTML='🚐'">` : '🚐'}
+      </div>
+      ${fotos.length>1?`<div class="inv-gallery-thumbs">${fotos.map((f,i) => `
+        <div class="inv-thumb ${i===0?'active':''}" onclick="setInvMainPhoto('${esc(f)}',this)">
+          <img src="${esc(f)}" onerror="this.style.display='none'">
+        </div>`).join('')}</div>`:''}
+    </div>
+    ${item.url_mobile?`<a href="${esc(item.url_mobile)}" target="_blank" class="link-ext">🔗 Ver anuncio original en mobile.de</a>`:''}
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title">Datos técnicos</div>
+    <div class="form-row">
+      ${fldInv('marca','Marca',item.marca,'text',item.id)}
+      ${fldInv('modelo','Modelo',item.modelo,'text',item.id)}
+      ${fldInv('anio','Año',item.anio,'number',item.id)}
+      ${fldInv('km','Kilómetros',item.km,'number',item.id)}
+    </div>
+    <div class="form-row">
+      ${fldInv('combustible','Combustible',item.combustible,'text',item.id)}
+      ${fldInv('cambio','Cambio',item.cambio,'text',item.id)}
+      ${fldInv('potencia_cv','Potencia (CV)',item.potencia_cv,'number',item.id)}
+      ${fldInv('color','Color',item.color,'text',item.id)}
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title">Precios</div>
+    <div class="form-row">
+      ${fldInv('precio_alemania','Precio Alemania (€)',item.precio_alemania,'number',item.id)}
+      ${fldInv('precio_venta_espana','Precio venta España (€)',item.precio_venta_espana,'number',item.id)}
+    </div>
+  </div>
+  <div class="card">
+    <div class="mini-section-title">Descripción web</div>
+    <div class="form-group">
+      <textarea class="form-control" rows="5" onchange="updateField('${item.id}','inventario','descripcion_web',this.value)">${esc(item.descripcion_web||'')}</textarea>
+    </div>
+  </div>`;
+}
+
+function renderFichaInvRight(item) {
+  const el = document.getElementById('fi-right');
+  el.innerHTML = `
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="mini-section-title" style="margin-bottom:0">Estado y clasificación</div>
+      <button class="btn btn-ghost btn-sm" onclick="syncToWordPress('${item.id}','inventario')">🔄 Sincronizar con WordPress</button>
+    </div>
+    <div style="font-size:12px;margin-bottom:12px">${item.wp_post_id?`✅ <a href="https://mendivan.com/?p=${esc(String(item.wp_post_id))}" target="_blank" class="link-ext">Publicado en web</a>`:'<span style="color:var(--gray-400)">⚠️ No publicado en web</span>'}</div>
+    <div class="form-group">
+      <label class="form-label">Estado</label>
+      <select class="form-control" onchange="updateInvEstado(this.value)">
+        ${['disponible','reservado','vendido','archivado'].map(s =>
+          `<option value="${s}" ${item.estado===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <select class="form-control" onchange="updateField('${item.id}','inventario','categoria',this.value)">
+        <option value="furgoneta_vacia" ${item.categoria==='furgoneta_vacia'?'selected':''}>Furgoneta Vacía</option>
+        <option value="camper_serie" ${item.categoria==='camper_serie'?'selected':''}>Camper de Serie</option>
+        <option value="autocaravana" ${item.categoria==='autocaravana'?'selected':''}>Autocaravana</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Origen</label>
+      <select class="form-control" onchange="updateField('${item.id}','inventario','origen',this.value)">
+        <option value="alemania" ${item.origen==='alemania'?'selected':''}>🇩🇪 Alemania</option>
+        <option value="espana" ${item.origen==='espana'?'selected':''}>🇪🇸 España</option>
+      </select>
+    </div>
+    ${fldInv('url_mobile','Link mobile.de',item.url_mobile,'url',item.id)}
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="mini-section-title">Fotos (URLs, una por línea)</div>
+    <div class="form-group">
+      <textarea class="form-control" rows="6" placeholder="https://..." onchange="updateInvFotos(this.value)">${(item.fotos||[]).join('\n')}</textarea>
+    </div>
+    <div style="font-size:11px;color:var(--gray-400)">Tras guardar, recarga la galería volviendo a abrir la ficha</div>
+  </div>
+  <div class="card">
+    <div class="mini-section-title">Notas internas</div>
+    <div class="form-group">
+      <textarea class="form-control" rows="4" placeholder="Notas privadas..." onchange="updateField('${item.id}','inventario','notas_internas',this.value)">${esc(item.notas_internas||'')}</textarea>
+    </div>
+    <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Solo visible internamente, no se exporta</div>
+  </div>`;
+}
+
+function setInvMainPhoto(url, thumbEl) {
+  const main = document.getElementById('inv-main-photo');
+  if (main) main.innerHTML = `<img src="${esc(url)}" alt="foto" onerror="this.parentElement.innerHTML='🚐'">`;
+  document.querySelectorAll('.inv-thumb').forEach(t => t.classList.remove('active'));
+  thumbEl.classList.add('active');
+}
+
+function updateInvEstado(val) {
+  const item = inventario[currentInventarioId];
+  if (!item) return;
+  item.estado = val;
+  debounceSave('inventario', currentInventarioId);
+  document.getElementById('fi-badges').innerHTML = invBadges(item)+' '+wpBadge(item);
+}
+
+function updateInvFotos(val) {
+  const item = inventario[currentInventarioId];
+  if (!item) return;
+  item.fotos = val.split('\n').map(f => f.trim()).filter(Boolean);
+  debounceSave('inventario', currentInventarioId);
+}
+
+async function archivarInventarioItem() {
+  const item = inventario[currentInventarioId];
+  if (!item||!confirm('¿Archivar este vehículo? Seguirá siendo accesible con el filtro "Todos".')) return;
+  item.estado = 'archivado';
+  await saveInventarioItem(currentInventarioId);
+  document.getElementById('fi-badges').innerHTML = invBadges(item)+' '+wpBadge(item);
+  toast('Vehículo archivado','success');
+}
+
+async function eliminarInventarioItem() {
+  const item = inventario[currentInventarioId];
+  if (!item||!confirm(`¿Eliminar "${item.marca} ${item.modelo}"? Esta acción no se puede deshacer.`)) return;
+  delete inventario[currentInventarioId];
+  localStorage.removeItem('inventario_'+currentInventarioId);
+  try { const ex = await ghGet(`data/inventario/${currentInventarioId}.json`); if (ex) await ghDelete(`data/inventario/${currentInventarioId}.json`, ex.sha); } catch(e) {}
+  showView('inventario');
+  renderInventarioList();
+  toast('Vehículo eliminado','success');
+}
+
+// =========================================================
+// MODAL AÑADIR (2 pasos)
+// =========================================================
+function showNuevoInventarioModal() {
+  openModal(`
+    <div class="modal-title">🚐 Añadir al inventario</div>
+    <div class="step-indicator">
+      <div class="step-dot active" id="inv-step-1">1</div>
+      <div class="step-line" id="inv-step-line"></div>
+      <div class="step-dot" id="inv-step-2">2</div>
+      <span class="step-label">Extraer datos</span>
+    </div>
+    <div id="inv-modal-body">${invStep1HTML()}</div>
+  `, true);
+}
+
+function invStep1HTML() {
+  return `
+    <div class="form-group">
+      <label class="form-label">URL del anuncio en mobile.de (opcional)</label>
+      <input type="url" class="form-control" id="inv-url" placeholder="https://www.mobile.de/...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Pega aquí el texto completo del anuncio *</label>
+      <textarea class="form-control" id="inv-texto" rows="7" placeholder="Copia el texto del anuncio de mobile.de y pégalo aquí...&#10;&#10;Incluye: título, ficha técnica, descripción, precio..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">URLs de fotos (opcional)</label>
+      <textarea class="form-control" id="inv-fotos-manual" rows="3" placeholder="https://...&#10;https://..."></textarea>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:5px">En mobile.de: abre cada foto a tamaño completo, click derecho → Copiar dirección de imagen, y pega aquí todas las URLs (una por línea).</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-ghost" onclick="invGotoStep2({url_mobile:document.getElementById('inv-url').value,fotos:invMergeFotos([],document.getElementById('inv-fotos-manual').value)})">Saltar →</button>
+      <button class="btn btn-primary" onclick="invExtractWithAI()">🔍 Extraer con IA</button>
+    </div>`;
+}
+
+function invMergeFotos(aiFotos, manualRaw) {
+  const manual = (manualRaw||'').split('\n').map(f => f.trim()).filter(f => f.startsWith('http'));
+  const ai = Array.isArray(aiFotos)?aiFotos.filter(f => f&&f.startsWith('http')):[];
+  return [...new Set([...ai,...manual])];
+}
+
+async function invExtractWithAI() {
+  const texto = document.getElementById('inv-texto')?.value.trim();
+  if (!texto) { toast('Pega el texto del anuncio primero','error'); return; }
+  const aiKey = localStorage.getItem('ai_key');
+  if (!aiKey) { toast('Configura la Anthropic API Key primero','error'); return; }
+
+  const url = document.getElementById('inv-url')?.value||'';
+  const fotosManual = document.getElementById('inv-fotos-manual')?.value||'';
+  document.getElementById('inv-modal-body').innerHTML = `
+    <div style="text-align:center;padding:48px 20px;color:var(--gray-500)">
+      <span class="loading-dots" style="font-size:15px">Extrayendo datos con IA</span>
+    </div>`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 1000,
+        system: 'Eres un asistente especializado en análisis de anuncios de vehículos. Analiza el texto del anuncio y extrae los datos en formato JSON con exactamente estos campos: marca, modelo, anio, km, combustible, cambio, potencia_cv, color, precio_alemania, descripcion_original, fotos. El campo "fotos" debe ser un array con todas las URLs de imágenes que encuentres en el texto (busca patrones como https://...jpg, https://...jpeg, https://...png, https://...webp). Si el texto no contiene URLs de imágenes, devuelve fotos como array vacío []. Si no encuentras un dato de ficha técnica, ponlo como null. Responde ÚNICAMENTE con el JSON, sin explicaciones ni markdown.',
+        messages: [{ role:'user', content:`Extrae los datos de este anuncio:\n\n${texto}` }],
+      }),
+    });
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const data = await res.json();
+    const raw = data.content?.[0]?.text||'{}';
+    let parsed = {};
+    try { const m = raw.match(/\{[\s\S]*\}/); parsed = m?JSON.parse(m[0]):{};} catch(e) {}
+    const fotosFinales = invMergeFotos(parsed.fotos, fotosManual);
+    invGotoStep2({ ...parsed, fotos:fotosFinales, url_mobile:url });
+  } catch(e) {
+    document.getElementById('inv-modal-body').innerHTML = invStep1HTML();
+    document.getElementById('inv-url').value = url;
+    toast(`Error al extraer: ${e.message}`,'error');
+  }
+}
+
+function invGotoStep2(d) {
+  document.getElementById('inv-step-1').classList.replace('active','done');
+  document.getElementById('inv-step-line').classList.add('done');
+  document.getElementById('inv-step-2').classList.add('active');
+  d = d||{};
+  const origenDefault = (d.url_mobile||'').includes('mobile.de')?'alemania':'alemania';
+
+  document.getElementById('inv-modal-body').innerHTML = `
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Marca *</label><input type="text" class="form-control" id="i2-marca" value="${esc(d.marca||'')}"></div>
+      <div class="form-group"><label class="form-label">Modelo *</label><input type="text" class="form-control" id="i2-modelo" value="${esc(d.modelo||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Año</label><input type="number" class="form-control" id="i2-anio" value="${esc(d.anio||'')}"></div>
+      <div class="form-group"><label class="form-label">Kilómetros</label><input type="number" class="form-control" id="i2-km" value="${esc(d.km||'')}"></div>
+      <div class="form-group"><label class="form-label">CV</label><input type="number" class="form-control" id="i2-cv" value="${esc(d.potencia_cv||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Combustible</label><input type="text" class="form-control" id="i2-combustible" value="${esc(d.combustible||'')}"></div>
+      <div class="form-group"><label class="form-label">Cambio</label><input type="text" class="form-control" id="i2-cambio" value="${esc(d.cambio||'')}"></div>
+      <div class="form-group"><label class="form-label">Color</label><input type="text" class="form-control" id="i2-color" value="${esc(d.color||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Precio Alemania (€)</label><input type="number" class="form-control" id="i2-precio-de" value="${esc(d.precio_alemania||'')}"></div>
+      <div class="form-group"><label class="form-label">Precio venta España (€)</label><input type="number" class="form-control" id="i2-precio-es" value=""></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select class="form-control" id="i2-categoria">
+          <option value="furgoneta_vacia">Furgoneta Vacía</option>
+          <option value="camper_serie">Camper de Serie</option>
+          <option value="autocaravana">Autocaravana</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Origen</label>
+        <select class="form-control" id="i2-origen">
+          <option value="alemania" ${origenDefault==='alemania'?'selected':''}>🇩🇪 Alemania</option>
+          <option value="espana" ${origenDefault==='espana'?'selected':''}>🇪🇸 España</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado inicial</label>
+        <select class="form-control" id="i2-estado">
+          <option value="disponible">Disponible</option>
+          <option value="reservado">Reservado</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción original</label>
+      <textarea class="form-control" id="i2-desc-orig" rows="3">${esc(d.descripcion_original||'')}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+        Descripción web
+        <button type="button" class="btn btn-ghost btn-sm" onclick="invGenerarDescWeb()" style="font-size:11px;padding:3px 8px">✨ Generar con IA</button>
+      </label>
+      <textarea class="form-control" id="i2-desc-web" rows="3" placeholder="Descripción para mostrar en la web..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fotos (URLs, una por línea)</label>
+      <textarea class="form-control" id="i2-fotos" rows="3" placeholder="https://...">${esc((d.fotos||[]).join('\n'))}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas internas</label>
+      <textarea class="form-control" id="i2-notas" rows="2"></textarea>
+    </div>
+    <input type="hidden" id="i2-url-mobile" value="${esc(d.url_mobile||'')}">
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearInventarioItem()">Guardar vehículo</button>
+    </div>`;
+}
+
+async function invGenerarDescWeb() {
+  const aiKey = localStorage.getItem('ai_key');
+  if (!aiKey) { toast('Configura la Anthropic API Key primero','error'); return; }
+  const marca = document.getElementById('i2-marca')?.value||'';
+  const modelo = document.getElementById('i2-modelo')?.value||'';
+  const anio = document.getElementById('i2-anio')?.value||'';
+  const km = document.getElementById('i2-km')?.value||'';
+  const cv = document.getElementById('i2-cv')?.value||'';
+  const combustible = document.getElementById('i2-combustible')?.value||'';
+  const descOrig = document.getElementById('i2-desc-orig')?.value||'';
+  const categoria = document.getElementById('i2-categoria')?.value||'';
+  const area = document.getElementById('i2-desc-web');
+  area.value = 'Generando...'; area.disabled = true;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': aiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 350,
+        system: 'Eres un copywriter especializado en vehículos de ocio y campers. Escribe descripciones de venta atractivas, concisas (máx 3 frases), en español, enfocadas en el lifestyle y los beneficios de uso. Tono cercano y entusiasta. Sin precio.',
+        messages: [{ role:'user', content:`Escribe una descripción web para: ${marca} ${modelo} ${anio}, ${km} km, ${combustible}, ${cv} CV, categoría ${categoria}. Descripción original: ${descOrig}` }],
+      }),
+    });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    area.value = data.content?.[0]?.text||'';
+  } catch(e) {
+    area.value = ''; toast('Error al generar descripción','error');
+  }
+  area.disabled = false;
+}
+
+async function crearInventarioItem() {
+  const marca = document.getElementById('i2-marca')?.value.trim();
+  const modelo = document.getElementById('i2-modelo')?.value.trim();
+  if (!marca||!modelo) { toast('Marca y modelo son obligatorios','error'); return; }
+  const id = genId();
+  const now = new Date().toISOString();
+  const fotosRaw = document.getElementById('i2-fotos')?.value||'';
+  inventario[id] = {
+    id,
+    categoria: document.getElementById('i2-categoria')?.value||'furgoneta_vacia',
+    origen: document.getElementById('i2-origen')?.value||'alemania',
+    estado: document.getElementById('i2-estado')?.value||'disponible',
+    url_mobile: document.getElementById('i2-url-mobile')?.value||'',
+    marca, modelo,
+    anio: parseInt(document.getElementById('i2-anio')?.value)||null,
+    km: parseInt(document.getElementById('i2-km')?.value)||null,
+    combustible: document.getElementById('i2-combustible')?.value||'',
+    cambio: document.getElementById('i2-cambio')?.value||'',
+    potencia_cv: parseInt(document.getElementById('i2-cv')?.value)||null,
+    color: document.getElementById('i2-color')?.value||'',
+    precio_alemania: parseFloat(document.getElementById('i2-precio-de')?.value)||null,
+    precio_venta_espana: parseFloat(document.getElementById('i2-precio-es')?.value)||null,
+    descripcion_original: document.getElementById('i2-desc-orig')?.value||'',
+    descripcion_web: document.getElementById('i2-desc-web')?.value||'',
+    fotos: fotosRaw.split('\n').map(f => f.trim()).filter(Boolean),
+    notas_internas: document.getElementById('i2-notas')?.value||'',
+    fecha_entrada: now, fecha_actualizacion: now,
+  };
+  closeModal();
+  await saveInventarioItem(id);
+  renderInventarioList();
+  openInventarioItem(id);
+  toast('Vehículo añadido al inventario','success');
+}
+
+// =========================================================
+// EXPORTAR WORDPRESS
+// =========================================================
+function generarHTMLExport() {
+  const item = inventario[currentInventarioId];
+  if (!item) return;
+  const foto = (item.fotos||[])[0]||'';
+  const precioStr = item.precio_venta_espana?`${Number(item.precio_venta_espana).toLocaleString('es-ES')} €`:'Consultar precio';
+  const origenLabel = item.origen==='alemania'?'🇩🇪 Importado de Alemania':'🇪🇸 España';
+  const catLabel = { furgoneta_vacia:'Furgoneta Vacía', camper_serie:'Camper de Serie', autocaravana:'Autocaravana' }[item.categoria]||item.categoria;
+  const ctaUrl = 'https://calendly.com/mendivan';
+  const ctaText = item.origen==='alemania'?'Quiero importar este vehículo →':'Me interesa este vehículo →';
+  const specs = [item.combustible,item.potencia_cv?item.potencia_cv+' CV':null,item.km?item.km.toLocaleString('es-ES')+' km':null].filter(Boolean).join(' · ');
+
+  const html = `<!-- MendiVan Inventario: ${item.marca} ${item.modelo} ${item.anio||''} -->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:680px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.10)">
+${foto?`  <img src="${foto}" alt="${item.marca} ${item.modelo}" style="width:100%;height:320px;object-fit:cover;display:block">`:''}
+  <div style="padding:28px 24px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span style="background:#195d6a;color:white;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${origenLabel}</span>
+      <span style="background:#fde8cc;color:#7a4010;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">${catLabel}</span>
+    </div>
+    <h2 style="margin:0 0 6px;font-size:26px;font-weight:800;color:#195d6a;line-height:1.2">${item.marca} ${item.modelo}${item.anio?' '+item.anio:''}</h2>
+    <p style="margin:0 0 18px;font-size:14px;color:#6a7a6a">${specs}</p>
+    ${item.descripcion_web?`<p style="margin:0 0 22px;font-size:15px;color:#1a2a1a;line-height:1.65">${item.descripcion_web}</p>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-top:18px;border-top:1px solid #e8ede8">
+      <div>
+        <div style="font-size:11px;color:#9aaa9a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Precio</div>
+        <div style="font-size:28px;font-weight:800;color:#195d6a">${precioStr}</div>
+      </div>
+      <a href="${ctaUrl}" style="display:inline-block;background:#539c88;color:#ffffff;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">${ctaText}</a>
+    </div>
+  </div>
+</div>`;
+
+  document.getElementById('export-html-area').value = html;
+  toast('HTML generado ✓','success');
+}
+
+async function copiarHTMLExport() {
+  const area = document.getElementById('export-html-area');
+  if (!area?.value.trim()) { toast('Genera el HTML primero','error'); return; }
+  try { await navigator.clipboard.writeText(area.value); } catch(e) { area.select(); document.execCommand('copy'); }
+  const btn = document.getElementById('btn-copiar-html');
+  if (btn) { btn.textContent = '✓ Copiado'; setTimeout(() => { btn.innerHTML = '📋 Copiar'; }, 2000); }
+  toast('Copiado al portapapeles','success');
+}
+</script>

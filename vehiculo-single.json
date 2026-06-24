@@ -1,0 +1,328 @@
+{
+  "version": "0.4",
+  "title": "Ficha Vehículo - MendiVan",
+  "type": "single",
+  "content": [
+    {
+      "id": "a1b2c3d4",
+      "elType": "section",
+      "isInner": false,
+      "settings": {
+        "background_background": "classic",
+        "background_color": "#195d6a",
+        "padding": {
+          "top": "40",
+          "right": "20",
+          "bottom": "40",
+          "left": "20",
+          "unit": "px",
+          "isLinked": false
+        },
+        "padding_mobile": {
+          "top": "28",
+          "right": "16",
+          "bottom": "28",
+          "left": "16",
+          "unit": "px",
+          "isLinked": false
+        }
+      },
+      "elements": [
+        {
+          "id": "e1f2a3b4",
+          "elType": "column",
+          "settings": {
+            "_column_size": 100,
+            "_inline_size": null
+          },
+          "elements": [
+            {
+              "id": "w1a2b3c4",
+              "elType": "widget",
+              "widgetType": "theme-post-title",
+              "settings": {
+                "title_color": "#ffffff",
+                "typography_typography": "custom",
+                "typography_font_size": {
+                  "size": 36,
+                  "unit": "px"
+                },
+                "typography_font_size_mobile": {
+                  "size": 26,
+                  "unit": "px"
+                },
+                "typography_font_weight": "700",
+                "align": "left"
+              }
+            },
+            {
+              "id": "w2b3c4d5",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div class=\"mv-hero-badges\">\n  <span class=\"mv-badge mv-badge-cat\">[acf field='categoria']</span>\n  <span class=\"mv-badge mv-badge-orig\">[acf field='origen']</span>\n  <span class=\"mv-badge mv-badge-est\">[acf field='estado']</span>\n</div>\n<style>\n.mv-hero-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }\n.mv-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: capitalize; }\n.mv-badge-cat { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.35); }\n.mv-badge-orig { background: #feab70; color: #fff; }\n.mv-badge-est { background: #539c88; color: #fff; }\n</style>"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b2c3d4e5",
+      "elType": "section",
+      "isInner": false,
+      "settings": {
+        "padding": {
+          "top": "60",
+          "right": "20",
+          "bottom": "60",
+          "left": "20",
+          "unit": "px",
+          "isLinked": false
+        },
+        "padding_mobile": {
+          "top": "32",
+          "right": "16",
+          "bottom": "32",
+          "left": "16",
+          "unit": "px",
+          "isLinked": false
+        },
+        "gap": "extended"
+      },
+      "elements": [
+        {
+          "id": "c3d4e5f6",
+          "elType": "column",
+          "settings": {
+            "_column_size": 60,
+            "_inline_size": 60
+          },
+          "elements": [
+            {
+              "id": "w3c4d5e6",
+              "elType": "widget",
+              "widgetType": "theme-post-featured-image",
+              "settings": {
+                "width": {
+                  "size": 100,
+                  "unit": "%"
+                },
+                "image_border_radius": {
+                  "top": "10",
+                  "right": "10",
+                  "bottom": "10",
+                  "left": "10",
+                  "unit": "px",
+                  "isLinked": true
+                },
+                "_margin": {
+                  "top": "0",
+                  "right": "0",
+                  "bottom": "24",
+                  "left": "0",
+                  "unit": "px",
+                  "isLinked": false
+                }
+              }
+            },
+            {
+              "id": "w4d5e6f7",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div class=\"mv-specs-grid\">\n  <div class=\"mv-spec\">\n    <strong>Año</strong>\n    <span>[acf field='anio']</span>\n  </div>\n  <div class=\"mv-spec\">\n    <strong>Kilómetros</strong>\n    <span>[acf field='km'] km</span>\n  </div>\n  <div class=\"mv-spec\">\n    <strong>Combustible</strong>\n    <span>[acf field='combustible']</span>\n  </div>\n  <div class=\"mv-spec\">\n    <strong>Cambio</strong>\n    <span>[acf field='cambio']</span>\n  </div>\n  <div class=\"mv-spec\">\n    <strong>Potencia</strong>\n    <span>[acf field='potencia_cv'] CV</span>\n  </div>\n  <div class=\"mv-spec\">\n    <strong>Color</strong>\n    <span>[acf field='color']</span>\n  </div>\n</div>\n<style>\n.mv-specs-grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: 12px;\n  margin-top: 4px;\n}\n.mv-spec {\n  background: #f0f4ed;\n  border-radius: 8px;\n  padding: 14px 16px;\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  border-left: 3px solid #539c88;\n}\n.mv-spec strong {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #195d6a;\n  letter-spacing: 0.06em;\n  font-weight: 600;\n}\n.mv-spec span {\n  font-size: 15px;\n  font-weight: 700;\n  color: #1a1a1a;\n  text-transform: capitalize;\n}\n@media (max-width: 768px) {\n  .mv-specs-grid { grid-template-columns: 1fr 1fr; }\n}\n</style>"
+              }
+            }
+          ]
+        },
+        {
+          "id": "d4e5f6a7",
+          "elType": "column",
+          "settings": {
+            "_column_size": 40,
+            "_inline_size": 40
+          },
+          "elements": [
+            {
+              "id": "w5e6f7a8",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div class=\"mv-price-card\">\n  <div class=\"mv-price-row\">\n    <span class=\"mv-price-label\">Precio en Alemania</span>\n    <span class=\"mv-price-orig\">[acf field='precio_alemania'] €</span>\n  </div>\n  <div class=\"mv-price-divider\"></div>\n  <div class=\"mv-price-row mv-price-main\">\n    <span class=\"mv-price-label\">Precio en España</span>\n    <span class=\"mv-price-es\">[acf field='precio_venta_espana'] €</span>\n  </div>\n</div>\n<style>\n.mv-price-card {\n  background: #fff;\n  border: 2px solid #195d6a;\n  border-radius: 10px;\n  padding: 20px 22px;\n  margin-bottom: 20px;\n}\n.mv-price-row {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 6px 0;\n}\n.mv-price-label {\n  font-size: 12px;\n  color: #777;\n  font-weight: 500;\n}\n.mv-price-orig {\n  font-size: 15px;\n  font-weight: 600;\n  color: #195d6a;\n}\n.mv-price-divider {\n  height: 1px;\n  background: #e5ebe9;\n  margin: 8px 0;\n}\n.mv-price-main .mv-price-es {\n  font-size: 26px;\n  font-weight: 800;\n  color: #539c88;\n}\n</style>"
+              }
+            },
+            {
+              "id": "w6f7a8b9",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div class=\"mv-desc-box\">\n  <h3 class=\"mv-desc-title\">Descripción</h3>\n  <div class=\"mv-desc-text\">[acf field='descripcion_web']</div>\n</div>\n<style>\n.mv-desc-box {\n  margin-bottom: 22px;\n}\n.mv-desc-title {\n  font-size: 13px;\n  text-transform: uppercase;\n  letter-spacing: 0.07em;\n  color: #195d6a;\n  font-weight: 600;\n  margin-bottom: 8px;\n}\n.mv-desc-text {\n  font-size: 14px;\n  line-height: 1.75;\n  color: #444;\n}\n</style>"
+              }
+            },
+            {
+              "id": "w7a8b9c0",
+              "elType": "widget",
+              "widgetType": "button",
+              "settings": {
+                "text": "Quiero importar este vehículo →",
+                "link": {
+                  "url": "https://calendly.com/mendivan",
+                  "is_external": true,
+                  "nofollow": false,
+                  "custom_attributes": ""
+                },
+                "size": "lg",
+                "button_type": "",
+                "background_color": "#feab70",
+                "button_text_color": "#ffffff",
+                "border_radius": {
+                  "top": "6",
+                  "right": "6",
+                  "bottom": "6",
+                  "left": "6",
+                  "unit": "px",
+                  "isLinked": true
+                },
+                "typography_font_size": {
+                  "size": 15,
+                  "unit": "px"
+                },
+                "typography_font_weight": "700",
+                "width": "100",
+                "_margin": {
+                  "top": "0",
+                  "right": "0",
+                  "bottom": "12",
+                  "left": "0",
+                  "unit": "px",
+                  "isLinked": false
+                },
+                "hover_background_color": "#e8944a",
+                "hover_color": "#ffffff"
+              }
+            },
+            {
+              "id": "w8b9c0d1",
+              "elType": "widget",
+              "widgetType": "html",
+              "settings": {
+                "html": "<div class=\"mv-anuncio-link\">\n  <a href=\"[acf field='url_mobile']\" target=\"_blank\" rel=\"noopener noreferrer\">Ver anuncio original en mobile.de →</a>\n</div>\n<style>\n.mv-anuncio-link {\n  text-align: center;\n}\n.mv-anuncio-link a {\n  font-size: 12px;\n  color: #195d6a;\n  text-decoration: underline;\n  opacity: 0.75;\n  transition: opacity 0.2s;\n}\n.mv-anuncio-link a:hover {\n  opacity: 1;\n}\n</style>"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e5f6a7b8",
+      "elType": "section",
+      "isInner": false,
+      "settings": {
+        "background_background": "classic",
+        "background_color": "#f0f4ed",
+        "padding": {
+          "top": "70",
+          "right": "20",
+          "bottom": "70",
+          "left": "20",
+          "unit": "px",
+          "isLinked": false
+        },
+        "padding_mobile": {
+          "top": "48",
+          "right": "16",
+          "bottom": "48",
+          "left": "16",
+          "unit": "px",
+          "isLinked": false
+        }
+      },
+      "elements": [
+        {
+          "id": "f6a7b8c9",
+          "elType": "column",
+          "settings": {
+            "_column_size": 100,
+            "_inline_size": null
+          },
+          "elements": [
+            {
+              "id": "w9c0d1e2",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "¿Te interesa este vehículo?",
+                "align": "center",
+                "title_color": "#195d6a",
+                "typography_typography": "custom",
+                "typography_font_size": {
+                  "size": 30,
+                  "unit": "px"
+                },
+                "typography_font_size_mobile": {
+                  "size": 24,
+                  "unit": "px"
+                },
+                "typography_font_weight": "700",
+                "_margin": {
+                  "top": "0",
+                  "right": "0",
+                  "bottom": "12",
+                  "left": "0",
+                  "unit": "px",
+                  "isLinked": false
+                }
+              }
+            },
+            {
+              "id": "w0d1e2f3",
+              "elType": "widget",
+              "widgetType": "text-editor",
+              "settings": {
+                "editor": "<p style=\"text-align:center; color:#555; font-size:16px; line-height:1.7; max-width:560px; margin:0 auto 28px;\">Contáctanos y te asesoramos sobre todo el proceso de importación desde Alemania — sin sorpresas.</p>",
+                "align": "center"
+              }
+            },
+            {
+              "id": "w1e2f3a4",
+              "elType": "widget",
+              "widgetType": "button",
+              "settings": {
+                "text": "Reservar llamada gratuita",
+                "link": {
+                  "url": "https://calendly.com/mendivan",
+                  "is_external": true,
+                  "nofollow": false,
+                  "custom_attributes": ""
+                },
+                "size": "xl",
+                "background_color": "#195d6a",
+                "button_text_color": "#ffffff",
+                "border_radius": {
+                  "top": "6",
+                  "right": "6",
+                  "bottom": "6",
+                  "left": "6",
+                  "unit": "px",
+                  "isLinked": true
+                },
+                "typography_font_size": {
+                  "size": 16,
+                  "unit": "px"
+                },
+                "typography_font_weight": "600",
+                "align": "center",
+                "hover_background_color": "#0e3d47",
+                "hover_color": "#ffffff"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "page_settings": {
+    "post_status": "publish"
+  }
+}
