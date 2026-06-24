@@ -1419,7 +1419,8 @@ function openVehiculo(id) {
   badges.innerHTML = `
     <span class="badge ${v.estado==='activo'?'badge-green':v.estado==='seleccionado'?'badge-blue':'badge-gray'}">${v.estado||'activo'}</span>
     <span class="badge badge-gray">Fase ${v.fase_actual||0}</span>
-    ${v.link_mobile ? `<a href="${esc(v.link_mobile)}" target="_blank" class="link-ext">🔗 mobile.de</a>` : ''}`;
+    ${v.link_mobile ? `<a href="${esc(v.link_mobile)}" target="_blank" class="link-ext">🔗 mobile.de</a>` : ''}
+    ${wpBadge(v)}`;
 
   renderAlertasVehiculo(v, c);
   renderFichaVehiculoLeft(v, c);
@@ -1640,6 +1641,10 @@ function renderFichaVehiculoRight(v, c) {
   if (!chatHistory[v.id]) chatHistory[v.id] = [];
 
   el.innerHTML = `
+  <div class="card" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <span style="font-size:13px;color:var(--gray-500)">${v.wp_post_id ? `✅ <a href="https://mendivan.com/?p=${esc(v.wp_post_id)}" target="_blank" class="link-ext" style="font-size:13px">Publicado en web</a>` : '⚠️ No publicado en web'}</span>
+    <button class="btn btn-ghost btn-sm" onclick="syncToWordPress('${v.id}','vehiculo')">🔄 Sincronizar con WordPress</button>
+  </div>
   <div class="chat-panel">
     <div class="chat-header">
       <div class="chat-ai-dot"></div>
@@ -2213,7 +2218,7 @@ function openInventarioItem(id) {
   const item = inventario[id];
   if (!item) return;
   document.getElementById('fi-titulo').textContent = `${item.marca||''} ${item.modelo||''} ${item.anio||''}`.trim() || 'Sin nombre';
-  document.getElementById('fi-badges').innerHTML = invBadges(item);
+  document.getElementById('fi-badges').innerHTML = invBadges(item) + ' ' + wpBadge(item);
   const exportArea = document.getElementById('export-html-area');
   if (exportArea) exportArea.value = '';
   renderFichaInvLeft(item);
@@ -2272,7 +2277,11 @@ function renderFichaInvRight(item) {
   const el = document.getElementById('fi-right');
   el.innerHTML = `
   <div class="card" style="margin-bottom:16px">
-    <div class="mini-section-title">Estado y clasificación</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="mini-section-title" style="margin-bottom:0">Estado y clasificación</div>
+      <button class="btn btn-ghost btn-sm" onclick="syncToWordPress('${item.id}','inventario')">🔄 Sincronizar con WordPress</button>
+    </div>
+    <div style="font-size:12px;margin-bottom:12px">${item.wp_post_id ? `✅ <a href="https://mendivan.com/?p=${esc(String(item.wp_post_id))}" target="_blank" class="link-ext">Publicado en web</a>` : '<span style="color:var(--gray-400)">⚠️ No publicado en web</span>'}</div>
     <div class="form-group">
       <label class="form-label">Estado</label>
       <select class="form-control" onchange="updateInvEstado(this.value)">
@@ -2654,6 +2663,81 @@ async function copiarHTMLExport() {
   const btn = document.getElementById('btn-copiar-html');
   if (btn) { btn.textContent = '✓ Copiado'; setTimeout(() => { btn.innerHTML = '📋 Copiar'; }, 2000); }
   toast('Copiado al portapapeles', 'success');
+}
+
+// =========================================================
+// WORDPRESS SYNC
+// =========================================================
+const WP_BASE = 'https://mendivan.com/wp-json/wp/v2';
+const WP_AUTH = 'Basic ' + btoa('kixyowsn:SJmz TlbV uvXA VeHP rjwf kMVK');
+
+function wpBadge(item) {
+  if (!item) return '';
+  return item.wp_post_id
+    ? `<a href="https://mendivan.com/?p=${esc(String(item.wp_post_id))}" target="_blank" class="link-ext" style="font-size:12px">✅ Web</a>`
+    : `<span style="font-size:12px;color:var(--gray-400)">⚠️ Sin publicar</span>`;
+}
+
+async function syncToWordPress(id, source) {
+  const item = source === 'inventario' ? inventario[id] : vehiculos[id];
+  if (!item) return;
+
+  const title = [item.marca, item.modelo, item.anio].filter(Boolean).join(' ');
+  const body = {
+    title,
+    status: 'publish',
+    meta: {
+      categoria: item.categoria || '',
+      origen: item.origen || '',
+      estado: item.estado || '',
+      km: String(item.km || ''),
+      combustible: item.combustible || '',
+      cambio: item.cambio || '',
+      potencia_cv: String(item.potencia_cv || ''),
+      color: item.color || '',
+      precio_alemania: String(item.precio_alemania || ''),
+      precio_venta_espana: String(item.precio_venta_espana || ''),
+      descripcion_web: item.descripcion_web || '',
+      fotos: (item.fotos || []).join(','),
+      url_mobile: item.url_mobile || item.link_mobile || '',
+      notas_internas: item.notas_internas || '',
+      crm_id: item.id,
+    },
+  };
+
+  const isUpdate = !!item.wp_post_id;
+  const endpoint = isUpdate
+    ? `${WP_BASE}/vehiculos/${item.wp_post_id}`
+    : `${WP_BASE}/vehiculos`;
+  const method = isUpdate ? 'PUT' : 'POST';
+
+  setSaveIndicator('saving', 'Sincronizando...');
+  try {
+    const res = await fetch(endpoint, {
+      method,
+      headers: { 'Authorization': WP_AUTH, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `WordPress ${res.status}`);
+    }
+    const data = await res.json();
+    item.wp_post_id = data.id;
+
+    if (source === 'inventario') {
+      await saveInventarioItem(id);
+      openInventarioItem(id);
+    } else {
+      await saveVehiculo(id);
+      openVehiculo(id);
+    }
+    toast(`${isUpdate ? 'Actualizado' : 'Publicado'} en WordPress ✓`, 'success');
+  } catch(e) {
+    setSaveIndicator('error', 'Error WP');
+    toast(`Error WordPress: ${e.message}`, 'error');
+    console.error(e);
+  }
 }
 
 // =========================================================
