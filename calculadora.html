@@ -537,6 +537,10 @@
         <img id="photoPreviewImg" src="" alt="Preview del vehículo">
         <button type="button" class="btn-photo-remove" onclick="removePhoto()">✕ Quitar foto</button>
       </div>
+      <div style="margin-top:8px">
+        <label class="lbl" style="margin-top:6px">O pega una URL de imagen</label>
+        <input type="url" id="pdfFotoUrl" placeholder="https://..." oninput="handlePhotoUrl()">
+      </div>
     </div>
     <div class="fg">
       <label class="lbl">Referencia interna (opcional)</label>
@@ -815,32 +819,31 @@
           <div class="cost-cols">
             <div class="cost-lbl">Revisión / Inspección mecánica <small>En origen, antes de comprar</small></div>
             <input type="checkbox" class="cost-toggle-cb" id="incRevision" checked onchange="recalculate()">
-            <input type="number" id="minRevision" value="200" min="0" oninput="recalculate()">
-            <input type="number" id="maxRevision" value="450" min="0" oninput="recalculate()">
+            <input type="number" id="minRevision" value="300" min="0" oninput="recalculate()">
+            <input type="number" id="maxRevision" value="400" min="0" oninput="recalculate()">
           </div>
 
           <div class="cost-cols">
             <div class="cost-lbl">Placas Temporales + Seguro Exportación</div>
             <input type="checkbox" class="cost-toggle-cb" id="incPlacasTemp" checked onchange="recalculate()">
             <input type="number" id="minPlacasTemp" value="250" min="0" oninput="recalculate()">
-            <input type="number" id="maxPlacasTemp" value="450" min="0" oninput="recalculate()">
+            <input type="number" id="maxPlacasTemp" value="350" min="0" oninput="recalculate()">
           </div>
 
           <div class="cost-cols">
             <div class="cost-lbl">Transporte en Camión / Portavehículos <small>Precio ajustable según ruta y proveedor</small></div>
             <input type="checkbox" class="cost-toggle-cb" id="incCamion" onchange="recalculate()">
-            <input type="number" id="minCamion" value="600" min="0" oninput="recalculate()">
-            <input type="number" id="maxCamion" value="1200" min="0" oninput="recalculate()">
+            <input type="number" id="minCamion" value="1000" min="0" oninput="recalculate()">
+            <input type="number" id="maxCamion" value="1500" min="0" oninput="recalculate()">
           </div>
 
           <!-- ── SECCIÓN: TRÁMITES EN ESPAÑA ── -->
           <div class="cost-sec">🇪🇸 Trámites en España</div>
 
-          <div class="cost-cols">
+          <div class="cost-fixed">
             <div class="cost-lbl">ITV Importación</div>
             <input type="checkbox" class="cost-toggle-cb" id="incITV" checked onchange="recalculate()">
-            <input type="number" id="minITV" value="180" min="0" oninput="recalculate()">
-            <input type="number" id="maxITV" value="250" min="0" oninput="recalculate()">
+            <div class="cost-fixed-val">250 €</div>
           </div>
 
           <div class="cost-fixed">
@@ -849,18 +852,16 @@
             <div class="cost-fixed-val">99,77 €</div>
           </div>
 
-          <div class="cost-cols">
+          <div class="cost-fixed">
             <div class="cost-lbl">Ficha Técnica Reducida <small>Necesaria cuando el vehículo no dispone de COC europeo</small></div>
             <input type="checkbox" class="cost-toggle-cb" id="incFichaTecnica" onchange="recalculate()">
-            <input type="number" id="minFichaTecnica" value="100" min="0" oninput="recalculate()">
-            <input type="number" id="maxFichaTecnica" value="100" min="0" oninput="recalculate()">
+            <div class="cost-fixed-val">100 €</div>
           </div>
 
-          <div class="cost-cols">
+          <div class="cost-fixed">
             <div class="cost-lbl">Placas Españolas</div>
             <input type="checkbox" class="cost-toggle-cb" id="incPlacas" checked onchange="recalculate()">
-            <input type="number" id="minPlacas" value="30" min="0" oninput="recalculate()">
-            <input type="number" id="maxPlacas" value="40" min="0" oninput="recalculate()">
+            <div class="cost-fixed-val">40 €</div>
           </div>
 
           <div class="cost-cols">
@@ -1105,6 +1106,14 @@ function setTipo(t) {
   document.getElementById('autocaravanaNote').classList.toggle('hidden', t !== 'autocaravana');
   // Homologación row visibility
   document.getElementById('rowHomologacion').style.display = t === 'camper' ? '' : 'none';
+  // Revision cost range depends on vehicle type
+  if (t === 'furgoneta') {
+    document.getElementById('minRevision').value = 300;
+    document.getElementById('maxRevision').value = 400;
+  } else {
+    document.getElementById('minRevision').value = 400;
+    document.getElementById('maxRevision').value = 500;
+  }
   recalculate();
 }
 
@@ -1217,16 +1226,13 @@ document.getElementById('incViaje').addEventListener('change', function() {
 
 function resetCosts() {
   const defs = {
-    minITV:180, maxITV:250,
-    minPlacas:30, maxPlacas:40,
     minGestoria:150, maxGestoria:200,
-    minPlacasTemp:250, maxPlacasTemp:450,
-    minRevision:200, maxRevision:450,
+    minPlacasTemp:250, maxPlacasTemp:350,
+    minRevision:300, maxRevision:400,
     minIVTM:80, maxIVTM:150,
     minGarantia:250, maxGarantia:350,
     minViaje:150, maxViaje:400,
-    minCamion:600, maxCamion:1200,
-    minFichaTecnica:100, maxFichaTecnica:100,
+    minCamion:1000, maxCamion:1500,
   };
   Object.entries(defs).forEach(([id, v]) => {
     const el = document.getElementById(id);
@@ -1331,7 +1337,7 @@ function getCostSections() {
   // ── Sección 2: Trámites en España
   const sec3 = [];
   if (readBool('incITV')) {
-    sec3.push({ label: 'ITV Importación', min: readNum('minITV'), max: readNum('maxITV'), type: 'cost' });
+    sec3.push({ label: 'ITV Importación', min: 250, max: 250, type: 'cost' });
   }
   if (iedmt && (effectiveIedmtFinal > 0)) {
     sec3.push({ label: `IEDMT — Imp. Matriculación (${iedmt.tramo})`, min: effectiveIedmtFinal, max: effectiveIedmtFinal, type: 'tax' });
@@ -1343,10 +1349,10 @@ function getCostSections() {
     sec3.push({ label: 'Matriculación DGT (tasa oficial)', min: 99.77, max: 99.77, type: 'cost' });
   }
   if (readBool('incFichaTecnica')) {
-    sec3.push({ label: 'Ficha Técnica Reducida', min: readNum('minFichaTecnica'), max: readNum('maxFichaTecnica'), type: 'cost' });
+    sec3.push({ label: 'Ficha Técnica Reducida', min: 100, max: 100, type: 'cost' });
   }
   if (readBool('incPlacas')) {
-    sec3.push({ label: 'Placas Españolas', min: readNum('minPlacas'), max: readNum('maxPlacas'), type: 'cost' });
+    sec3.push({ label: 'Placas Españolas', min: 40, max: 40, type: 'cost' });
   }
   if (readBool('incIVTM')) {
     sec3.push({ label: 'IVTM — Impuesto de Circulación (1er año)', min: readNum('minIVTM'), max: readNum('maxIVTM'), type: 'cost' });
@@ -1623,17 +1629,24 @@ document.getElementById('configOverlay').addEventListener('click', function(e) {
 let pdfPhotoDataURL = null;
 let pdfPhotoNW = 0;
 let pdfPhotoNH = 0;
+let pdfPhotoUrl = '';
 let logoDataURL = null;
 window.addEventListener('load', function() {
-  const img = new Image();
-  img.onload = function() {
+  try {
     const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    try { logoDataURL = canvas.toDataURL('image/png'); } catch(e) {}
-  };
-  img.src = 'logo.png';
+    canvas.width = 120; canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#539c88';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(0, 0, 120, 120, 14);
+    else ctx.rect(0, 0, 120, 120);
+    ctx.fill();
+    ctx.font = '72px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🚐', 60, 66);
+    logoDataURL = canvas.toDataURL('image/png');
+  } catch(e) {}
 });
 
 function handlePhotoSelect(event) {
@@ -1651,9 +1664,43 @@ function handlePhotoSelect(event) {
   reader.readAsDataURL(file);
 }
 
+function handlePhotoUrl() {
+  const url = document.getElementById('pdfFotoUrl').value.trim();
+  pdfPhotoUrl = url;
+  if (!url) {
+    if (!pdfPhotoDataURL) {
+      document.getElementById('photoPlaceholder').classList.remove('hidden');
+      document.getElementById('photoPreviewWrap').classList.add('hidden');
+    }
+    return;
+  }
+  const imgEl = new Image();
+  imgEl.crossOrigin = 'anonymous';
+  imgEl.onload = function() {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgEl.naturalWidth; canvas.height = imgEl.naturalHeight;
+      canvas.getContext('2d').drawImage(imgEl, 0, 0);
+      pdfPhotoDataURL = canvas.toDataURL('image/jpeg');
+      pdfPhotoNW = imgEl.naturalWidth; pdfPhotoNH = imgEl.naturalHeight;
+    } catch(e) {
+      pdfPhotoDataURL = null;
+    }
+    document.getElementById('photoPreviewImg').src = url;
+    document.getElementById('photoPlaceholder').classList.add('hidden');
+    document.getElementById('photoPreviewWrap').classList.remove('hidden');
+  };
+  imgEl.onerror = function() {
+    document.getElementById('photoPlaceholder').classList.remove('hidden');
+    document.getElementById('photoPreviewWrap').classList.add('hidden');
+  };
+  imgEl.src = url;
+}
+
 function removePhoto() {
-  pdfPhotoDataURL = null; pdfPhotoNW = 0; pdfPhotoNH = 0;
+  pdfPhotoDataURL = null; pdfPhotoNW = 0; pdfPhotoNH = 0; pdfPhotoUrl = '';
   document.getElementById('pdfFoto').value = '';
+  document.getElementById('pdfFotoUrl').value = '';
   document.getElementById('photoPreviewImg').src = '';
   document.getElementById('photoPlaceholder').classList.remove('hidden');
   document.getElementById('photoPreviewWrap').classList.add('hidden');
@@ -1690,17 +1737,26 @@ function generatePDF() {
   // jsPDF helvetica only supports latin-1; sanitize chars outside that range
   function ps(str) {
     return String(str)
-      .replace(/→/g, '->')   // →
-      .replace(/—/g, '-')    // —
-      .replace(/–/g, '-')    // –
-      .replace(/₂/g, '2')    // ₂
-      .replace(/·/g, '·');   // · (middle dot, already in latin-1 but ensure)
+      .replace(/→/g, '->')
+      .replace(/—/g, '-')
+      .replace(/–/g, '-')
+      .replace(/₂/g, '2')
+      .replace(/·/g, '·')
+      .replace(/á/g, 'a').replace(/Á/g, 'A')
+      .replace(/é/g, 'e').replace(/É/g, 'E')
+      .replace(/í/g, 'i').replace(/Í/g, 'I')
+      .replace(/ó/g, 'o').replace(/Ó/g, 'O')
+      .replace(/ú/g, 'u').replace(/Ú/g, 'U')
+      .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+      .replace(/ç/g, 'c').replace(/Ç/g, 'C');
   }
 
   function setFont(size, style='normal', color=C_BLACK) {
     doc.setFontSize(size);
     doc.setFont('helvetica', style);
     doc.setTextColor(...color);
+    doc.setCharSpace(0);
   }
   function setFill(rgb) { doc.setFillColor(...rgb); }
   function setDraw(rgb) { doc.setDrawColor(...rgb); }
