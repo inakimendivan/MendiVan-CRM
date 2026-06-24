@@ -2610,12 +2610,12 @@ function generarHTMLExport() {
     : 'Consultar precio';
   const origenLabel = item.origen === 'alemania' ? '🇩🇪 Importado de Alemania' : '🇪🇸 España';
   const catLabel = { furgoneta_vacia:'Furgoneta Vacía', camper_serie:'Camper de Serie', autocaravana:'Autocaravana' }[item.categoria] || item.categoria;
-  const subject = encodeURIComponent(`Me interesa: ${item.marca} ${item.modelo} ${item.anio||''}`);
+  const ctaUrl = 'https://calendly.com/mendivan';
+  const ctaText = item.origen === 'alemania' ? 'Quiero importar este vehículo →' : 'Me interesa este vehículo →';
   const specs = [
-    item.km ? item.km.toLocaleString('es-ES')+' km' : null,
-    item.combustible, item.cambio,
+    item.combustible,
     item.potencia_cv ? item.potencia_cv+' CV' : null,
-    item.color,
+    item.km ? item.km.toLocaleString('es-ES')+' km' : null,
   ].filter(Boolean).join(' · ');
 
   const html = `<!-- MendiVan Inventario: ${item.marca} ${item.modelo} ${item.anio||''} -->
@@ -2634,7 +2634,7 @@ ${foto ? `  <img src="${foto}" alt="${item.marca} ${item.modelo}" style="width:1
         <div style="font-size:11px;color:#9aaa9a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Precio</div>
         <div style="font-size:28px;font-weight:800;color:#195d6a">${precioStr}</div>
       </div>
-      <a href="mailto:inaki@mendivan.com?subject=${subject}" style="display:inline-block;background:#539c88;color:#ffffff;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">Me interesa este vehículo →</a>
+      <a href="${ctaUrl}" style="display:inline-block;background:#539c88;color:#ffffff;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">${ctaText}</a>
     </div>
   </div>
 </div>`;
