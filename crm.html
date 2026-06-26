@@ -165,7 +165,7 @@ function switchClienteTab(tab) {
   document.querySelectorAll('.cliente-tab').forEach(el => el.style.display = 'none');
   document.getElementById(`cliente-tab-${tab}`).style.display = 'block';
   if (tab==='info') renderClienteInfo();
-  else if (tab==='vehiculos') renderClienteVehiculos();
+  else if (tab==='vehiculos') { renderClienteVehiculos(); attachVehiculoRowListener(); }
   else if (tab==='notas') renderClienteNotas();
 }
 
@@ -247,11 +247,13 @@ function renderClienteVehiculos() {
             </div>
           </div>`).join('')}
     </div>`;
+  attachVehiculoRowListener();
 }
 
 function attachVehiculoRowListener() {
   const container = document.getElementById('cliente-tab-vehiculos');
   if (!container || container.dataset.vehiculoClickAttached) return;
+  console.debug('[CRM] vehiculo row listener attached');
   container.addEventListener('click', event => {
     const row = event.target.closest('.vehiculo-row');
     if (!row || !container.contains(row)) return;
