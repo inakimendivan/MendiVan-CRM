@@ -883,8 +883,15 @@ function ghHeaders(token) {
   return {
     'Authorization': `token ${ghToken}`,
     'Accept': 'application/vnd.github.v3+json',
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json;charset=utf-8',
   };
+}
+
+function utf8ToBase64(str) {
+  const uint8 = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+  return btoa(binary);
 }
 
 function buildGitHubError(action, path, res, body) {
@@ -911,7 +918,7 @@ async function ghPut(path, content, sha) {
   const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
   const body = {
     message: `CRM update: ${path}`,
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+    content: utf8ToBase64(JSON.stringify(content, null, 2)),
     branch: GH_BRANCH,
   };
   if (sha) body.sha = sha;
