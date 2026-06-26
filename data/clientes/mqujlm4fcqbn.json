@@ -7,12 +7,13 @@
   "canal_entrada": "Web",
   "estado_pipeline": "buscando",
   "fecha_primer_contacto": "2026-06-26T06:20:57.279Z",
-  "fecha_ultima_interaccion": "2026-06-26T06:21:24.755Z",
+  "fecha_ultima_interaccion": "2026-06-26T06:21:30.146Z",
   "notas": [],
   "vehiculos": [],
   "busca": {
     "tipo_vehiculo": "Camper 540 de serie",
     "anyo_min": "2017",
-    "km_max": "80000"
+    "km_max": "80000",
+    "presupuesto_total": "40000"
   }
 }
