@@ -1027,6 +1027,7 @@ async function saveVehiculo(id) {
   if (!v) return;
   v.fecha_ultima_actualizacion = new Date().toISOString();
   const path = `data/vehiculos/${id}.json`;
+  console.log('GitHub save vehicle path:', path);
   localSet('vehiculo_'+id, v);
   setSaveIndicator('saving', 'Guardando...');
   try {

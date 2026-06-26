@@ -236,7 +236,7 @@ function renderClienteVehiculos() {
       ${vList.length===0
         ? '<div class="empty-state"><div class="icon">🚗</div><p>Sin vehículos vinculados todavía.</p></div>'
         : vList.map(v => `
-          <div class="vehiculo-row ${v.estado}" onclick="openVehiculo('${v.id}')" style="cursor:pointer">
+          <div class="vehiculo-row ${v.estado}" data-vehiculo-id="${v.id}" onclick="openVehiculo('${v.id}')" style="cursor:pointer" role="button">
             <div class="vehiculo-info">
               <div class="vehiculo-name">${esc(v.marca||'')} ${esc(v.modelo||'')} ${v.anyo||''}</div>
               <div class="vehiculo-meta">${v.km?v.km.toLocaleString()+' km · ':''}${v.combustible||''} · Fase ${v.fase_actual||0} · ${formatDate(v.fecha_ultima_actualizacion)}</div>
