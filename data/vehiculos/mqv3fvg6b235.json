@@ -6,7 +6,7 @@
   "anyo": null,
   "km": null,
   "precio_alemania": null,
-  "combustible": "Diésel",
+  "combustible": "DiÃ©sel",
   "tipo_carroceria": "Berlina",
   "link_mobile": "",
   "estado": "activo",
@@ -18,12 +18,17 @@
   "modalidad_transporte": "camion",
   "notas_veh": [],
   "documentos": [],
-  "contexto_chat": [],
-  "chat_iniciado": false,
+  "contexto_chat": [
+    {
+      "role": "assistant",
+      "content": "¡Buenas! Vamos a arrancar la ficha y preparar la llamada al concesionario. Pregunta: propietarios anteriores, si tienen ZB I y ZB II, si tienen COC, si ha tenido accidentes, si las ventanas laterales son originales o de post-producción, y el estado general. Cuando acabes cuéntame qué te han dicho y lo registro."
+    }
+  ],
+  "chat_iniciado": true,
   "carvertical_analizado": false,
   "informe_revision_fisica_analizado": false,
   "zb1_analizado": false,
   "zb2_analizado": false,
   "propietarios_anteriores_confirmados": false,
-  "fecha_ultima_actualizacion": "2026-06-26T15:36:21.750Z"
+  "fecha_ultima_actualizacion": "2026-06-26T16:33:14.957Z"
 }
