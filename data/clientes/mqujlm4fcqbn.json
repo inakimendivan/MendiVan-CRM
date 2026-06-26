@@ -7,10 +7,11 @@
   "canal_entrada": "Web",
   "estado_pipeline": "buscando",
   "fecha_primer_contacto": "2026-06-26T06:20:57.279Z",
-  "fecha_ultima_interaccion": "2026-06-26T06:21:14.639Z",
+  "fecha_ultima_interaccion": "2026-06-26T06:21:19.155Z",
   "notas": [],
   "vehiculos": [],
   "busca": {
-    "tipo_vehiculo": "Camper 540 de serie"
+    "tipo_vehiculo": "Camper 540 de serie",
+    "anyo_min": "2017"
   }
 }
