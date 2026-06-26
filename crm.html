@@ -165,7 +165,7 @@ function switchClienteTab(tab) {
   document.querySelectorAll('.cliente-tab').forEach(el => el.style.display = 'none');
   document.getElementById(`cliente-tab-${tab}`).style.display = 'block';
   if (tab==='info') renderClienteInfo();
-  else if (tab==='vehiculos') { renderClienteVehiculos(); attachVehiculoRowListener(); }
+  else if (tab==='vehiculos') renderClienteVehiculos();
   else if (tab==='notas') renderClienteNotas();
 }
 
@@ -236,7 +236,7 @@ function renderClienteVehiculos() {
       ${vList.length===0
         ? '<div class="empty-state"><div class="icon">🚗</div><p>Sin vehículos vinculados todavía.</p></div>'
         : vList.map(v => `
-          <div class="vehiculo-row ${v.estado}" data-vehiculo-id="${v.id}" style="cursor:pointer" role="button">
+          <div class="vehiculo-row ${v.estado}" onclick="openVehiculo('${v.id}')" style="cursor:pointer">
             <div class="vehiculo-info">
               <div class="vehiculo-name">${esc(v.marca||'')} ${esc(v.modelo||'')} ${v.anyo||''}</div>
               <div class="vehiculo-meta">${v.km?v.km.toLocaleString()+' km · ':''}${v.combustible||''} · Fase ${v.fase_actual||0} · ${formatDate(v.fecha_ultima_actualizacion)}</div>
@@ -247,20 +247,6 @@ function renderClienteVehiculos() {
             </div>
           </div>`).join('')}
     </div>`;
-  attachVehiculoRowListener();
-}
-
-function attachVehiculoRowListener() {
-  const container = document.getElementById('cliente-tab-vehiculos');
-  if (!container || container.dataset.vehiculoClickAttached) return;
-  console.debug('[CRM] vehiculo row listener attached');
-  container.addEventListener('click', event => {
-    const row = event.target.closest('.vehiculo-row');
-    if (!row || !container.contains(row)) return;
-    const vehicleId = row.dataset.vehiculoId;
-    if (vehicleId) openVehiculo(vehicleId);
-  });
-  container.dataset.vehiculoClickAttached = '1';
 }
 
 function renderClienteNotas() {
