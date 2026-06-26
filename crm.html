@@ -294,6 +294,7 @@ function updatePipeline(val) {
 // VEHICULO
 // =========================================================
 function openVehiculo(id) {
+  console.log('[openVehiculo] id:', id, '| vehiculos[id]:', vehiculos[id], '| total keys:', Object.keys(vehiculos).length);
   currentVehiculoId = id;
   const v = vehiculos[id];
   const c = clientes[v?.cliente_id];
