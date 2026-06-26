@@ -429,6 +429,27 @@ function renderFichaVehiculoLeft(v, c) {
   renderResumenVehiculoPanel(v);
 }
 
+function renderFaseBlock(v, f) {
+  const completadas = f.tareas.filter(t => v.tareas && v.tareas[t.id]).length;
+  const isActive = (v.fase_actual || 0) === f.id;
+  return `
+  <div class="fase-block${isActive ? ' fase-active' : ''}">
+    <div class="fase-header" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:8px 0" onclick="const t=this.nextElementSibling;t.style.display=t.style.display==='none'?'block':'none'">
+      <span style="font-weight:600;font-size:13px">${f.label}</span>
+      <span class="fase-progress" style="font-size:12px;color:var(--gray-500)">${completadas}/${f.tareas.length} ✓</span>
+    </div>
+    <div class="fase-tareas" style="display:${isActive?'block':'none'};padding-bottom:8px">
+      ${f.tareas.map(t => {
+        const done = !!(v.tareas && v.tareas[t.id]);
+        return `<div style="margin-bottom:6px">
+          <input type="checkbox" id="t_${t.id}" ${done?'checked':''} onchange="toggleTarea('${t.id}',this.checked)">
+          <label for="t_${t.id}" class="tarea-label ${done?'done':''}" style="font-size:13px;margin-left:6px;cursor:pointer">${t.label}</label>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
 function calcularPorcentajeInfoVehiculo(v) {
   const entries = [
     !!v.marca,
