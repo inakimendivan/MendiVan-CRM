@@ -7,14 +7,15 @@
   "canal_entrada": "Web",
   "estado_pipeline": "buscando",
   "fecha_primer_contacto": "2026-06-08",
-  "fecha_ultima_interaccion": "2026-06-26T15:03:00.067Z",
+  "fecha_ultima_interaccion": "2026-06-26T15:11:04.406Z",
   "notas": [],
   "vehiculos": [
     "mqujte6cz8un",
     "mqulpd3ztr2q",
     "mquu6rkzbzin",
     "mquufuqp33q6",
-    "mqv28yxuugv9"
+    "mqv28yxuugv9",
+    "mqv2jcnpnmm0"
   ],
   "busca": {
     "tipo_vehiculo": "Camper 540 de serie",
