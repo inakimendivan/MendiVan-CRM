@@ -878,19 +878,32 @@ function saveSetup() {
 // =========================================================
 // GITHUB API
 // =========================================================
-function ghHeaders() {
+function ghHeaders(token) {
+  const ghToken = token || localStorage.getItem('gh_token');
   return {
-    'Authorization': `token ${localStorage.getItem('gh_token')}`,
+    'Authorization': `token ${ghToken}`,
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json',
   };
+}
+
+function buildGitHubError(action, path, res, body) {
+  const detail = body && body.message ? `${body.message}` : JSON.stringify(body || {});
+  const err = new Error(`${action} ${path}: ${res.status} ${res.statusText} ${detail}`);
+  err.status = res.status;
+  err.statusText = res.statusText;
+  err.apiBody = body;
+  return err;
 }
 
 async function ghGet(path) {
   const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
   const res = await fetch(url, { headers: ghHeaders() });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`GitHub GET ${path}: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw buildGitHubError('GitHub GET', path, res, errBody);
+  }
   return res.json();
 }
 
@@ -904,8 +917,8 @@ async function ghPut(path, content, sha) {
   if (sha) body.sha = sha;
   const res = await fetch(url, { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `GitHub PUT ${path}: ${res.status}`);
+    const errBody = await res.json().catch(() => null);
+    throw buildGitHubError('GitHub PUT', path, res, errBody);
   }
   return res.json();
 }
@@ -914,7 +927,10 @@ async function ghDelete(path, sha) {
   const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
   const body = { message: `CRM delete: ${path}`, sha, branch: GH_BRANCH };
   const res = await fetch(url, { method: 'DELETE', headers: ghHeaders(), body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`GitHub DELETE ${path}: ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw buildGitHubError('GitHub DELETE', path, res, errBody);
+  }
 }
 
 async function ghListDir(path) {
@@ -1019,6 +1035,13 @@ async function saveVehiculo(id) {
     shaCache[path] = (await ghGet(path))?.sha;
     setSaveIndicator('saved', 'Guardado ✓');
   } catch(e) {
+    console.error('GitHub save vehicle failed:', {
+      path,
+      status: e.status || 'N/A',
+      statusText: e.statusText || 'N/A',
+      message: e.message,
+      apiBody: e.apiBody || null,
+    });
     console.warn('GitHub save failed, stored locally', e);
     setSaveIndicator('error', '⚠ Solo local');
     toast('No se pudo guardar en GitHub. Guardado en local.', 'warning');
@@ -1201,6 +1224,10 @@ function showConfig() {
         <label class="form-label">Personal Access Token</label>
         <input type="password" class="form-control" id="cfg-gh-token" value="${localStorage.getItem('gh_token')||''}">
       </div>
+      <div class="form-group" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-secondary" type="button" onclick="testGitHub()">Test GitHub</button>
+        <span id="cfg-gh-test-result" style="font-size:13px;color:var(--gray-600)"></span>
+      </div>
     </div>
     <div class="config-section">
       <h3>Anthropic IA</h3>
@@ -1223,6 +1250,36 @@ function guardarConfig() {
   if (aiKey) localStorage.setItem('ai_key', aiKey);
   closeModal();
   toast('Configuración guardada', 'success');
+}
+
+async function testGitHub() {
+  const resultEl = document.getElementById('cfg-gh-test-result');
+  resultEl.textContent = 'Probando...';
+  const token = document.getElementById('cfg-gh-token').value.trim() || localStorage.getItem('gh_token');
+  if (!token) {
+    resultEl.textContent = 'Falta token de GitHub';
+    return;
+  }
+  try {
+    const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}`;
+    const res = await fetch(url, { headers: ghHeaders(token) });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      console.error('GitHub test failed:', res.status, res.statusText, body);
+      resultEl.textContent = `Error ${res.status}: ${body?.message||res.statusText}`;
+      toast('Test GitHub falló. Revisa la consola.', 'error');
+      return;
+    }
+    const permissions = body.permissions || {};
+    const writeAccess = permissions.push || permissions.admin;
+    resultEl.textContent = writeAccess ? 'Token válido con acceso de escritura' : 'Token OK pero sin acceso de escritura';
+    toast('Test GitHub completado', writeAccess ? 'success' : 'warning');
+    console.log('GitHub test response:', body);
+  } catch(e) {
+    console.error('GitHub test error:', e);
+    resultEl.textContent = `Error: ${e.message}`;
+    toast('Test GitHub falló. Revisa la consola.', 'error');
+  }
 }
 
 // =========================================================
