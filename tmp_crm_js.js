@@ -1,59 +1,4 @@
-<!-- VIEW: CRM LIST -->
-<div id="crm-view" class="view">
-  <div class="section-header">
-    <h1 class="section-title">Clientes</h1>
-    <button class="btn btn-primary" onclick="showNuevoClienteModal()">+ Nuevo cliente</button>
-  </div>
-  <div id="search-bar">
-    <input type="text" id="search-input" placeholder="Buscar por nombre, teléfono o localidad..." oninput="renderClientesList()">
-  </div>
-  <div id="clientes-grid" class="clientes-grid"></div>
-</div>
 
-<!-- VIEW: FICHA CLIENTE -->
-<div id="ficha-cliente-view" class="view">
-  <div class="back-btn" onclick="showView('crm')">← Volver a clientes</div>
-  <div class="ficha-header">
-    <div>
-      <div class="ficha-title" id="fc-nombre">—</div>
-      <div style="margin-top:6px" id="fc-pipeline-badge"></div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="editarCliente()">✏️ Editar datos</button>
-      <button class="btn btn-danger btn-sm" onclick="eliminarCliente()">🗑 Eliminar</button>
-    </div>
-  </div>
-  <div class="tabs-inner">
-    <div class="tab-inner active" onclick="switchClienteTab('info')">Datos</div>
-    <div class="tab-inner" onclick="switchClienteTab('vehiculos')">Vehículos</div>
-    <div class="tab-inner" onclick="switchClienteTab('notas')">Notas</div>
-  </div>
-  <div id="cliente-tab-info" class="cliente-tab"></div>
-  <div id="cliente-tab-vehiculos" class="cliente-tab" style="display:none"></div>
-  <div id="cliente-tab-notas" class="cliente-tab" style="display:none"></div>
-</div>
-
-<!-- VIEW: FICHA VEHICULO -->
-<div id="ficha-vehiculo-view" class="view">
-  <div class="back-btn" id="veh-back-btn" onclick="backToCliente()">← Volver al cliente</div>
-  <div class="ficha-header">
-    <div>
-      <div class="ficha-title" id="fv-titulo">—</div>
-      <div style="margin-top:6px;display:flex;gap:8px;align-items:center" id="fv-badges"></div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="syncToWordPress(currentVehiculoId,'vehiculo')">🔄 Sincronizar con WordPress</button>
-      <button class="btn btn-danger btn-sm" onclick="eliminarVehiculo()">🗑 Eliminar</button>
-    </div>
-  </div>
-  <div id="fv-alertas" class="alertas-panel"></div>
-  <div class="vehiculo-grid">
-    <div id="fv-left"></div>
-    <div id="fv-right"></div>
-  </div>
-</div>
-
-<script>
 // =========================================================
 // ALERTAS ENGINE
 // =========================================================
@@ -1110,4 +1055,3 @@ async function eliminarVehiculo() {
   switchClienteTab('vehiculos');
   toast('Vehículo eliminado','success');
 }
-</script>
