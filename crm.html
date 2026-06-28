@@ -819,11 +819,15 @@ async function sendFileToAI(vid, prompt, base64, mimeType, filename) {
   const aiKey = localStorage.getItem('ai_key');
   if (!aiKey) { toast('Configura la Anthropic API Key primero','error'); return; }
 
-  const content = `Archivo: ${filename} (${mimeType})\nBASE64:\n${base64}\n\n${prompt}`;
-  chatHistory[vid].push({ role: 'user', content });
+  let fileBlock;
+  if (mimeType === 'application/pdf') {
+    fileBlock = { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
+  } else {
+    fileBlock = { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } };
+  }
+  const contentBlocks = [fileBlock, { type: 'text', text: prompt }];
+  chatHistory[vid].push({ role: 'user', content: contentBlocks });
   appendChatMsg(vid, 'user', 'He añadido un archivo para analizar: ' + filename);
-  v.contexto_chat = [...chatHistory[vid]];
-  debounceSave('vehiculo', vid);
 
   const thinkId = 'think_'+Date.now();
   const messagesEl = document.getElementById(`chat-messages-${vid}`);
@@ -857,7 +861,18 @@ async function sendFileToAI(vid, prompt, base64, mimeType, filename) {
     const reply = data.content?.[0]?.text||'(sin respuesta)';
     chatHistory[vid].push({ role: 'assistant', content: reply });
     appendChatMsg(vid, 'ai', reply);
-    v.contexto_chat = [...chatHistory[vid]];
+    if (!v.documentos_analizados) v.documentos_analizados = [];
+    v.documentos_analizados.push({
+      nombre_archivo: filename,
+      tipo: mimeType,
+      fecha: new Date().toISOString(),
+      resumen: reply,
+      datos_extraidos: {}
+    });
+    v.contexto_chat = chatHistory[vid].map(m => {
+      if (!Array.isArray(m.content)) return m;
+      return { role: m.role, content: m.content.filter(b => b.type === 'text').map(b => b.text).join('\n') };
+    });
     applyAIUpdatesFromReply(v, reply);
     debounceSave('vehiculo', vid);
   } catch(e) {
